@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\FirewallTest\Driver;
+namespace WPShieldon\FirewallTest\Driver;
 
 class SqliteDriverTest extends \Shieldon\FirewallTest\ShieldonTestCase
 {

@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\FirewallTest\Driver;
+namespace WPShieldon\FirewallTest\Driver;
 
 class RedisDriverTest extends \Shieldon\FirewallTest\ShieldonTestCase
 {

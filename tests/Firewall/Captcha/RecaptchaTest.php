@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\FirewallTest\Captcha;
+namespace WPShieldon\FirewallTest\Captcha;
 
 class ReCaptchaTest extends \Shieldon\FirewallTest\ShieldonTestCase
 {

@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\FirewallTest\Security;
+namespace WPShieldon\FirewallTest\Security;
 
 class XssTest extends \Shieldon\FirewallTest\ShieldonTestCase
 {

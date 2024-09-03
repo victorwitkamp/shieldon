@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\FirewallTest;
+namespace WPShieldon\FirewallTest;
 
 use function Shieldon\Firewall\get_session_instance;
 use function Shieldon\Firewall\get_response;

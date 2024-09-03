@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\FirewallTest\Panel;
+namespace WPShieldon\FirewallTest\Panel;
 
 use Psr\Http\Message\ResponseInterface;
 use Shieldon\Firewall\HttpResolver;

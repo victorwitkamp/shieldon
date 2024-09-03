@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\FirewallTest\Component;
+namespace WPShieldon\FirewallTest\Component;
 
 class IpTest extends \Shieldon\FirewallTest\ShieldonTestCase
 {

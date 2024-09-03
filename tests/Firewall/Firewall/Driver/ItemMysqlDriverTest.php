@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Tests\Firewall\Driver;
+namespace WPShieldon\Firewall\Tests\Firewall\Driver;
 
 class ItemMysqlDriverTest extends \Shieldon\FirewallTest\ShieldonTestCase
 {

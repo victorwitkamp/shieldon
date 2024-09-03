@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\FirewallTest\Log;
+namespace WPShieldon\FirewallTest\Log;
 
 use Shieldon\Firewall\Kernel\Enum;
 

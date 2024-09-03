@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\FirewallTest;
+namespace WPShieldon\FirewallTest;
 
 use PHPUnit\Framework\TestCase;
 use Shieldon\Firewall\Container;

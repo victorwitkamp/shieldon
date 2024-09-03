@@ -10,7 +10,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\FirewallTest\Mock;
+namespace WPShieldon\FirewallTest\Mock;
 
 class MockSaveConfig
 {

@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\FirewallTest;
+namespace WPShieldon\FirewallTest;
 
 class PanelTest extends \Shieldon\FirewallTest\ShieldonTestCase
 {

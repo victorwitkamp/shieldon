@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\FirewallTest\Driver;
+namespace WPShieldon\FirewallTest\Driver;
 
 class FileDriverTest extends \Shieldon\FirewallTest\ShieldonTestCase
 {

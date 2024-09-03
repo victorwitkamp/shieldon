@@ -18,7 +18,7 @@
  * @see       https://shieldon.io
  */
 
-namespace Shieldon\FirewallTest\Log;
+namespace WPShieldon\FirewallTest\Log;
 
 use Shieldon\Firewall\Kernel\Enum;
 

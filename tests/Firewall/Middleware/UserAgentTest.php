@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\FirewallTest\Middleware;
+namespace WPShieldon\FirewallTest\Middleware;
 
 class UserAgentTest extends \Shieldon\FirewallTest\ShieldonTestCase
 {
