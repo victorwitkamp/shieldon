@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Firewall\Messenger;
+namespace WPShieldon\Firewall\Firewall\Messenger;
 
 use Shieldon\Messenger\Messenger\MessengerInterface;
 use Shieldon\Messenger\Slack;
@@ -30,18 +30,18 @@ use Shieldon\Messenger\Slack;
  */
 class ItemSlack
 {
-    /**
-     * Initialize and get the instance.
+	/**
+	 * Initialize and get the instance.
      *
-     * @param array $setting The configuration of that messanger.
+	 * @param array $setting The configuration of that messanger.
      *
      * @return MessengerInterface
-     */
-    public static function get(array $setting): MessengerInterface
-    {
-        $botToken = $setting['config']['bot_token'] ?? '';
-        $channel  = $setting['config']['channel'] ?? '';
-
-        return new Slack($botToken, $channel);
-    }
+	 */
+	public static function get(array $setting): MessengerInterface
+	{
+		$botToken = $setting['config']['bot_token'] ?? '';
+		$channel  = $setting['config']['channel'] ?? '';
+		
+		return new Slack($botToken, $channel);
+	}
 }

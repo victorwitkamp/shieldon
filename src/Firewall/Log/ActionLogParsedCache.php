@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Log;
+namespace WPShieldon\Firewall\Log;
 
 use function date;
 use function file_get_contents;
@@ -36,107 +36,109 @@ use const JSON_PRETTY_PRINT;
  */
 final class ActionLogParsedCache
 {
-    /**
-     * $directory The directory where to store the logs in.
+	/**
+	 * $directory The directory where to store the logs in.
      *
      * @var string
      */
-    protected $directory = '';
+	protected string $directory = '';
 
-    /**
+	/**
      * Constructer.
      *
-     * @param string $directory The directory where to store the logs in.
-     */
-    public function __construct(string $directory = '')
-    {
-        $this->directory = $directory;
-    }
+	 * @param string $directory The directory where to store the logs in.
+	 */
+	public function __construct(string $directory = '')
+	{
+		$this->directory = $directory;
+	}
 
-    /**
-     * Save the data into a cache file.
-     *
-     * @param string $type The period type of action logs.
-     * @param string $data The parsed data of action logs.
-     *                     The keys are `time`, `ip_details`, `period_data`.
-     *
-     * @return self
-     */
-    public function save(string $type = 'today', array $data = []): self
-    {
-        $data['time'] = time();
+	/**
+	 * Save the data into a cache file.
+	 * 
+	 * @param string $type The period type of action logs.
+	 * @param array  $data The parsed data of action logs.
+	 *                     The keys are `time`, `ip_details`, `period_data`.
+	 * 
+	 * @return self
+	 */
+	public function save(string $type = 'today', array $data = []): self
+	{
+		$data['time'] = time();
 
-        $filePath = rtrim($this->directory, '/') . '/cache_' . $type . '.json';
+		$filePath = rtrim($this->directory, '/') . '/cache_' . $type . '.json';
 
-        file_put_contents($filePath, json_encode($data, JSON_PRETTY_PRINT));
+		file_put_contents($filePath, json_encode($data, JSON_PRETTY_PRINT));
 
-        return $this;
-    }
+		return $this;
+	}
 
-    /**
-     * Get the data from a cache file.
-     *
-     * @param string $type The period type of action logs.
-     *
+	/**
+	 * Get the data from a cache file.
+	 * 
+	 * @param string $type The period type of action logs.
+	 * 
      * @return array
-     */
-    public function get(string $type = 'today'): array
-    {
-        $data = [];
-        $filePath = rtrim($this->directory, '/') . '/cache_' . $type . '.json';
+	 */
+	public function get(string $type = 'today'): array
+	{
+		$data = [];
+		$filePath = rtrim($this->directory, '/') . '/cache_' . $type . '.json';
 
-        if (file_exists($filePath)) {
-            $content = file_get_contents($filePath);
-            $data = json_decode($content, true);
+		if (file_exists($filePath)) {
+			$content = file_get_contents($filePath);
+			$data = json_decode($content, true);
 
-            $cacheTime = $data['time'];
+			$cacheTime = $data['time'];
 
-            $keepCache = true;
+			$keepCache = true;
 
-            switch ($type) {
-                case 'yesterday':
-                case 'past_seven_days':
+			switch ($type) {
+				case 'yesterday':
+				case 'past_seven_days':
 
-                    // Update cache file daily.
-                    $endTime = strtotime(date('Y-m-d', strtotime('-1 day')));
-                    $beginTime = strtotime(date('Y-m-d', strtotime('-2 days')));
-                    break;
+					// Update cache file daily.
+					$endTime = strtotime(date('Y-m-d', strtotime('-1 day')));
+					$beginTime = strtotime(date('Y-m-d', strtotime('-2 days')));
+					break;
 
-                case 'last_month':
+				case 'last_month':
 
-                    // Update cache file monthly.
-                    $endTime = strtotime(date('Y-m-d', strtotime('-1 month')));
-                    $beginTime = strtotime(date('Y-m-d', strtotime('-2 months')));
-                    break;
+					// Update cache file monthly.
+					$endTime = strtotime(date('Y-m-d', strtotime('-1 month')));
+					$beginTime = strtotime(date('Y-m-d', strtotime('-2 months')));
+					break;
 
-                case 'this_month':
+				case 'this_month':
 
-                    // Update cache file daily.
-                    $endTime = strtotime(date('Y-m-d', strtotime('-1 day')));
-                    $beginTime = strtotime(date('Y-m') . '-01');
-                    break;
+					// Update cache file daily.
+					$endTime = strtotime(date('Y-m-d', strtotime('-1 day')));
+					$beginTime = strtotime(date('Y-m') . '-01');
+					break;
 
-                case 'past_seven_hours':
-                case 'today':
-                default:
-                    // Update cache file hourly.
-                    $endTime = strtotime(date('Y-m-d H:00:00', time()));
-                    $beginTime = strtotime(date('Y-m-d H:00:00', strtotime('-1 hour')));
-                    break;
-            }
+				case 'past_seven_hours':
+				case 'today':
+				default:
+					// Update cache file hourly.
+					$endTime = strtotime(date('Y-m-d H:00:00', time()));
+					$beginTime = strtotime(date('Y-m-d H:00:00', strtotime('-1 hour')));
+					break;
+			}
 
-            // The cacheTime is between beginTime and endTime.
-            // @codeCoverageIgnoreStart
-            if (($beginTime < $cacheTime) && ($endTime > $cacheTime)) {
-                $keepCache = false;
-            }
+			// The cacheTime is between beginTime and endTime.
 
-            if (!$keepCache) {
-                $data = [];
-            }
-            // @codeCoverageIgnoreEnd
-        }
+			if (($beginTime < $cacheTime) && ($endTime > $cacheTime)) {
+				$keepCache = false;
+			}
+			else {
+				$keepCache = false;
+			}
+			if (!$keepCache) {
+				$data = [];
+			}
 
-        return $data;
-    }
+		}
+
+		return $data;
+	}
 }

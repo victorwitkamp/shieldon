@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Firewall\Messenger;
+namespace WPShieldon\Firewall\Firewall\Messenger;
 
 use Shieldon\Messenger\Messenger\MessengerInterface;
 use Shieldon\Messenger\SlackWebhook;
@@ -30,17 +30,17 @@ use Shieldon\Messenger\SlackWebhook;
  */
 class ItemSlackWebhook
 {
-    /**
-     * Initialize and get the instance.
-     *
-     * @param array $setting The configuration of that messanger.
-     *
+	/**
+	 * Initialize and get the instance.
+	 * 
+	 * @param array $setting The configuration of that messanger.
+	 * 
      * @return MessengerInterface
-     */
-    public static function get(array $setting): MessengerInterface
-    {
-        $webhookUrl = $setting['config']['webhook_url'] ?? '';
+	 */
+	public static function get(array $setting): MessengerInterface
+	{
+		$webhookUrl = $setting['config']['webhook_url'] ?? '';
 
-        return new SlackWebhook($webhookUrl);
-    }
+		return new SlackWebhook($webhookUrl);
+	}
 }

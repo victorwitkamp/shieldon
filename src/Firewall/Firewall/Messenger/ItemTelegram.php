@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Firewall\Messenger;
+namespace WPShieldon\Firewall\Firewall\Messenger;
 
 use Shieldon\Messenger\Messenger\MessengerInterface;
 use Shieldon\Messenger\Telegram;
@@ -30,18 +30,18 @@ use Shieldon\Messenger\Telegram;
  */
 class ItemTelegram
 {
-    /**
-     * Initialize and get the instance.
-     *
-     * @param array $setting The configuration of that messanger.
+	/**
+	 * Initialize and get the instance.
+	 * 
+	 * @param array $setting The configuration of that messanger.
      *
      * @return MessengerInterface
-     */
-    public static function get(array $setting): MessengerInterface
-    {
+	 */
+	public static function get(array $setting): MessengerInterface
+	{
         $apiKey  = $setting['config']['api_key'] ?? '';
-        $channel = $setting['config']['channel'] ?? '';
-        
-        return new Telegram($apiKey, $channel);
-    }
+		$channel = $setting['config']['channel'] ?? '';
+		
+		return new Telegram($apiKey, $channel);
+	}
 }

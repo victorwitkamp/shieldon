@@ -20,16 +20,18 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Driver;
+namespace WPShieldon\Firewall\Driver;
 
-use Shieldon\Firewall\Driver\DriverProvider;
-use Shieldon\Firewall\Driver\FileDriverTrait;
+use WPShieldon\Firewall\Driver\DriverProvider;
+use WPShieldon\Firewall\Driver\FileDriverTrait;
+use FilesystemIterator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use function file_exists;
 use function file_get_contents;
 use function file_put_contents;
 use function in_array;
+use function is_array;
 use function is_dir;
 use function json_decode;
 use function ksort;
@@ -42,14 +44,14 @@ use function unlink;
  */
 class FileDriver extends DriverProvider
 {
-    use FileDriverTrait;
+	use FileDriverTrait;
 
     /**
      * The directory that data files stored to.
      *
      * @var string
      */
-    protected $directory = '/tmp/';
+	protected string $directory = '/tmp/';
 
 
     /**
@@ -57,251 +59,249 @@ class FileDriver extends DriverProvider
      *
      * @var string
      */
-    protected $extension = 'json';
+	protected string $extension = 'json';
 
-    /**
+	/**
      * Constructor.
      *
      * @param string $directory The directory for storing data files.
      */
-    public function __construct(string $directory = '')
-    {
+	public function __construct(string $directory = '')
+	{
         if ('' !== $directory) {
-            $this->directory = $directory;
-        }
-    }
+			$this->directory = $directory;
+		}
+	}
 
-    /**
-     * Initialize data tables.
-     *
-     * @param bool $dbCheck This is for creating data tables automatically
-     *                      Turn it off, if you don't want to check data tables every pageview.
-     *
+	/**
+	 * Initialize data tables.
+	 * 
+	 * @param bool $dbCheck This is for creating data tables automatically
+	 *                      Turn it off, if you don't want to check data tables every pageview.
+	 * 
      * @return void
-     */
-    protected function doInitialize(bool $dbCheck = true): void
-    {
-        if (!$this->isInitialized) {
-            if (!empty($this->channel)) {
-                $this->setChannel($this->channel);
-            }
+	 */
+	protected function doInitialize(bool $dbCheck = true): void
+	{
+		if (!$this->isInitialized) {
+			if (!empty($this->channel)) {
+				$this->setChannel($this->channel);
+			}
 
-            // Check the directory where data files write into.
-            if ($dbCheck) {
-                $this->createDirectory();
-            }
-        }
+			// Check the directory where data files write into.
+			if ($dbCheck) {
+				$this->createDirectory();
+			}
+		}
 
-        $this->isInitialized = true;
-    }
+		$this->isInitialized = true;
+	}
 
-    /**
-     * {@inheritDoc}
-     *
-     * @param string $type The type of the data table.
-     *
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @param string $type The type of the data table.
+	 * 
      * @return array
-     */
-    protected function doFetchAll(string $type = 'filter'): array
-    {
-        $results = [];
+	 */
+	protected function doFetchAll(string $type = 'filter'): array
+	{
+		$results = [];
 
-        $this->assertInvalidDataTable($type);
+		$this->assertInvalidDataTable($type);
 
-        $dir = $this->getDirectory($type);
+		$dir = $this->getDirectory($type);
 
-        if (is_dir($dir)) {
-            $it = new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS);
-            $files = new RecursiveIteratorIterator($it, RecursiveIteratorIterator::CHILD_FIRST);
+		if (is_dir($dir)) {
+			$it = new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS);
+			$files = new RecursiveIteratorIterator($it, RecursiveIteratorIterator::CHILD_FIRST);
 
-            foreach ($files as $file) {
-                if ($file->isFile()) {
-                    $filename = $file->getPath() . '/' . $file->getFilename();
-                    $fileContent = file_get_contents($filename);
+			foreach ($files as $file) {
+				if ($file->isFile()) {
+					$filename = $file->getPath() . '/' . $file->getFilename();
+					$fileContent = file_get_contents($filename);
 
-                    if (!empty($fileContent)) {
-                        $content = json_decode($fileContent, true);
+					if (!empty($fileContent)) {
+						$content = json_decode($fileContent, true);
 
-                        if ($type === 'session') {
-                            $sort = $content['microtimestamp'] . '.' . $file->getFilename();
-                        } else {
-                            $sort = $file->getMTime() . '.' . $file->getFilename();
-                        }
-                        $results[$sort] = $content;
-                    }
-                }
-            }
-            unset($it, $files);
+						if ($type === 'session') {
+							$sort = $content['microtimestamp'] . '.' . $file->getFilename();
+						} else {
+							$sort = $file->getMTime() . '.' . $file->getFilename();
+						}
+						$results[$sort] = $content;
+					}
+				}
+			}
+			unset($it, $files);
 
-            // Sort by ascending timestamp (microtimestamp).
-            ksort($results);
-        }
+			// Sort by ascending timestamp (microtimestamp).
+			ksort($results);
+		}
 
-        return $results;
-    }
+		return $results;
+	}
 
-    /**
-     * {@inheritDoc}
-     *
+	/**
+	 * {@inheritDoc}
+	 * 
      * @param string $ip   The data id of the entry to fetch.
-     * @param string $type The type of the data table.
-     *
+	 * @param string $type The type of the data table.
+	 * 
      * @return array
-     */
-    protected function doFetch(string $ip, string $type = 'filter'): array
-    {
-        $results = [];
+	 */
+	protected function doFetch(string $ip, string $type = 'filter'): array
+	{
+		$results = [];
+		
+		if (!file_exists($this->getFilename($ip, $type)) ||
+			!in_array($type, $this->tableTypes)
+		) {
+			return $results;
+		}
 
-        if (!file_exists($this->getFilename($ip, $type)) ||
-            !in_array($type, $this->tableTypes)
-        ) {
-            return $results;
-        }
+		$fileContent = file_get_contents($this->getFilename($ip, $type));
+		$resultData = json_decode($fileContent, true);
 
-        $fileContent = file_get_contents($this->getFilename($ip, $type));
-        $resultData = json_decode($fileContent, true);
+		// rule | session
+		if (is_array($resultData)) {
+			$results = $resultData;
+		}
 
-        // rule | session
-        if (is_array($resultData)) {
-            $results = $resultData;
-        }
+		// filter
+		if (!empty($resultData['log_data'])) {
+			return $resultData['log_data'];
+		}
 
-        // filter
-        if (!empty($resultData['log_data'])) {
-            return $resultData['log_data'];
-        }
+		return $results;
+	}
 
-        return $results;
-    }
-
-    /**
-     * {@inheritDoc}
-     *
+	/**
+	 * {@inheritDoc}
+	 * 
      * @param string $ip   The data id of the entry to check for.
-     * @param string $type The type of the data table.
-     *
+	 * @param string $type The type of the data table.
+	 * 
      * @return bool
-     */
-    protected function checkExist(string $ip, string $type = 'filter'): bool
-    {
-        if (file_exists($this->getFilename($ip, $type))) {
-            return true;
-        }
+	 */
+	protected function checkExist(string $ip, string $type = 'filter'): bool
+	{
+		if (file_exists($this->getFilename($ip, $type))) {
+			return true;
+		}
 
-        return false;
-    }
+		return false;
+	}
 
-    /**
-     * {@inheritDoc}
-     *
+	/**
+	 * {@inheritDoc}
+	 * 
      * @param string $ip     The data id.
      * @param array  $data   The data.
      * @param string $type   The type of the data table.
-     * @param int    $expire The data will be deleted after expiring.
-     *
+	 * @param int    $expire The data will be deleted after expiring.
+	 * 
      * @return bool
-     */
-    protected function doSave(string $ip, array $data, string $type = 'filter', $expire = 0): bool
-    {
-        $logData = [];
+	 */
+	protected function doSave(string $ip, array $data, string $type = 'filter', $expire = 0): bool
+	{
+		$logData = [];
 
-        switch ($type) {
-            case 'rule':
-                $logData = $data;
-                $logData['log_ip'] = $ip;
-                break;
+		switch ($type) {
+			case 'rule':
+				$logData = $data;
+				$logData['log_ip'] = $ip;
+				break;
 
-            case 'filter':
-                $logData['log_ip'] = $ip;
-                $logData['log_data'] = $data;
-                break;
+			case 'filter':
+				$logData['log_ip'] = $ip;
+				$logData['log_data'] = $data;
+				break;
 
-            case 'session':
-                unset($data['parsed_data']);
-                $logData = $data;
-                break;
-        }
+			case 'session':
+				unset($data['parsed_data']);
+				$logData = $data;
+				break;
+		}
 
-        $result = file_put_contents($this->getFilename($ip, $type), json_encode($logData));
+		$result = file_put_contents($this->getFilename($ip, $type), json_encode($logData));
 
-        // Update file time.
-        touch($this->getFilename($ip, $type), time());
+		// Update file time.
+		touch($this->getFilename($ip, $type), time());
 
-        return ($result > 0) ? true : false;
-    }
+		return $result > 0;
+	}
 
-    /**
-     * {@inheritDoc}
-     *
+	/**
+	 * {@inheritDoc}
+	 * 
      * @param string $ip   The key name of a redis entry.
-     * @param string $type The type of the data table.
-     *
+	 * @param string $type The type of the data table.
+	 * 
      * @return bool
-     */
-    protected function doDelete(string $ip, string $type = 'filter'): bool
-    {
-        if (in_array($type, ['rule', 'filter', 'session'])) {
-            return $this->remove($this->getFilename($ip, $type));
-        }
- 
-        return false;
-    }
+	 */
+	protected function doDelete(string $ip, string $type = 'filter'): bool
+	{
+		if (in_array($type, ['rule', 'filter', 'session'])) {
+			return $this->remove($this->getFilename($ip, $type));
+		}
 
-    /**
-     * {@inheritDoc}
-     *
-     * Rebuild data tables.
-     *
+		return false;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * Rebuild data tables.
+	 * 
      * @return bool
-     */
-    protected function doRebuild(): bool
-    {
-        // Those are Shieldon logs directories.
-        $tables = [
-            'filter'  => $this->getDirectory('filter'),
+	 */
+	protected function doRebuild(): bool
+	{
+		// Those are Shieldon logs directories.
+		$tables = [
+			'filter'  => $this->getDirectory('filter'),
             'rule'    => $this->getDirectory('rule'),
-            'session' => $this->getDirectory('session'),
-        ];
+			'session' => $this->getDirectory('session'),
+		];
 
-        // Remove them recursively.
-        foreach ($tables as $dir) {
-            if (file_exists($dir)) {
-                $it = new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS);
-                $files = new RecursiveIteratorIterator($it, RecursiveIteratorIterator::CHILD_FIRST);
-    
-                foreach ($files as $file) {
-                    if ($file->isDir()) {
-                        // @codeCoverageIgnoreStart
-                        rmdir($file->getRealPath());
-                        // @codeCoverageIgnoreEnd
-                    } else {
-                        unlink($file->getRealPath());
-                    }
-                }
-                unset($it, $files);
+		// Remove them recursively.
+		foreach ($tables as $dir) {
+			if (file_exists($dir)) {
+				$it = new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS);
+				$files = new RecursiveIteratorIterator($it, RecursiveIteratorIterator::CHILD_FIRST);
 
-                if (is_dir($dir)) {
-                    rmdir($dir);
-                }
-            }
-        }
+				foreach ($files as $file) {
+					if ($file->isDir()) {
+						rmdir($file->getRealPath());
+					} else {
+						unlink($file->getRealPath());
+					}
+				}
+				unset($it, $files);
 
-        return $this->createDirectory();
-    }
+				if (is_dir($dir)) {
+					rmdir($dir);
+				}
+			}
+		}
 
-    /**
-     * Remove a Shieldon log file.
-     * Removing a log file works as the same as removing a SQL table's row.
-     *
-     * @param string $logFilePath The absolute path of the log file.
-     *
+		return $this->createDirectory();
+	}
+
+	/**
+	 * Remove a Shieldon log file.
+	 * Removing a log file works as the same as removing a SQL table's row.
+	 * 
+	 * @param string $logFilePath The absolute path of the log file.
+	 * 
      * @return bool
-     */
-    private function remove(string $logFilePath): bool
-    {
-        if (file_exists($logFilePath)) {
-            return unlink($logFilePath);
-        }
-        return false;
-    }
+	 */
+	private function remove(string $logFilePath): bool
+	{
+		if (file_exists($logFilePath)) {
+			return unlink($logFilePath);
+		}
+		return false;
+	}
 }

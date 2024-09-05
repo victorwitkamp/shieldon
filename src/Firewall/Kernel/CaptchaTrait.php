@@ -20,17 +20,18 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Kernel;
+namespace WPShieldon\Firewall\Kernel;
 
-use Shieldon\Firewall\Kernel\Enum;
-use Shieldon\Firewall\Captcha\CaptchaInterface;
+use WPShieldon\Firewall\Kernel\Enum;
+use WPShieldon\Firewall\Captcha\CaptchaInterface;
+use function get_class;
 
 /*
  * Captcha Trait is loaded in Kernel instance only.
  */
 trait CaptchaTrait
 {
-    /**
+	/**
      *   Public methods       | Desctiotion
      *  ----------------------|---------------------------------------------
      *   setCaptcha           | Set a captcha.
@@ -39,88 +40,91 @@ trait CaptchaTrait
      *  ----------------------|---------------------------------------------
      */
 
-    /**
-     * Container for captcha addons.
-     * The collection of \Shieldon\Firewall\Captcha\CaptchaInterface
-     *
+	/**
+	 * Container for captcha addons.
+	 * The collection of \WPShieldon\Firewall\Captcha\CaptchaInterface
+	 * 
      * @var array
-     */
-    public $captcha = [];
+	 */
+	public array $captcha = [];
 
-    /**
-     * Get a class name without namespace string.
-     *
-     * @param object $instance Class
-     *
+	/**
+	 * Get a class name without namespace string.
+	 * 
+	 * @param object $instance Class
+	 * 
      * @return string
-     */
-    abstract protected function getClassName($instance): string;
+	 */
+	abstract protected function getClassName($instance): string;
 
-    /**
-     * Deal with online sessions.
-     *
-     * @param int $statusCode The response code.
-     *
-     * @return int The response code.
-     */
-    abstract protected function sessionHandler($statusCode): int;
+	/**
+	 * Deal with online sessions.
+	 * 
+	 * @param string $statusCode The response code.
+	 * 
+     * @return string The response code.
+	 */
+	abstract protected function sessionHandler(string $statusCode): string;
 
-    /**
-     * Save and return the result identifier.
-     * This method is for passing value from traits.
-     *
-     * @param int $resultCode The result identifier.
-     *
-     * @return int
-     */
-    abstract protected function setResultCode(int $resultCode): int;
+	/**
+	 * Save and return the result identifier.
+	 * This method is for passing value from traits.
+	 * 
+	 * @param string $resultCode The result identifier.
+	 * 
+     * @return string
+	 */
+	abstract protected function setResultCode(string $resultCode): string;
 
-    /**
-     * Set a captcha.
-     *
-     * @param CaptchaInterface $instance The captcha instance.
-     *
+	/**
+	 * Set a captcha.
+	 * 
+	 * @param CaptchaInterface $instance The captcha instance.
+	 * 
      * @return void
-     */
-    public function setCaptcha(CaptchaInterface $instance): void
-    {
-        $class = $this->getClassName($instance);
-        $this->captcha[$class] = $instance;
-    }
+	 */
+	public function setCaptcha(CaptchaInterface $instance): void
+	{
+		$class = $this->getClassName($instance);
+		$this->captcha[$class] = $instance;
+	}
 
     /**
      * Return the result from Captchas.
      *
      * @return bool
      */
-    public function captchaResponse(): bool
-    {
-        foreach ($this->captcha as $captcha) {
-            if (!$captcha->response()) {
-                return false;
-            }
-        }
+	public function captchaResponse(): bool
+	{
+		foreach ($this->captcha as $captcha) {
+			if (!$captcha->response()) {
+				$this->psrlogger->warning('Shieldon - CaptchaTrait - CaptchaResponse - ' . get_class($captcha) . ' - return false');
+				return false;
+			} else {
+				$this->psrlogger->warning('Shieldon - CaptchaTrait - CaptchaResponse - ' . get_class($captcha) . ' - return true');
+			}
+		}
 
-        /**
-         * $sessionLimit @ SessionTrait
-         * sessionHandler() @ SessionTrait
-         */
-        if (!empty($this->sessionLimit['count'])) {
-            return (bool) $this->setResultCode(
-                $this->sessionHandler(Enum::RESPONSE_ALLOW)
-            );
-        }
+		/**
+		 * $sessionLimit @ SessionTrait
+		 * sessionHandler() @ SessionTrait
+		 */
+		if (!empty($this->sessionLimit['count'])) {
+			return (bool) $this->setResultCode(
+				$this->sessionHandler(Enum::RESPONSE_ALLOW)
+			);
+		}
 
-        return true;
-    }
+		return true;
+	}
 
-    /**
-     * Mostly be used in unit testing purpose.
-     *
-     * @return void
-     */
-    public function disableCaptcha(): void
-    {
-        $this->captcha = [];
-    }
+	/**
+	 * Mostly be used in unit testing purpose.
+	 * 
+	 * @return void
+	 */
+	public function disableCaptcha(): void
+	{
+		$this->captcha = [];
+	}
 }

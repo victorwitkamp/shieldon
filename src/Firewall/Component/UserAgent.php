@@ -20,12 +20,13 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Component;
+namespace WPShieldon\Firewall\Component;
 
-use Shieldon\Firewall\Component\ComponentProvider;
-use Shieldon\Firewall\Component\DeniedTrait;
-use Shieldon\Firewall\IpTrait;
-use function Shieldon\Firewall\get_request;
+use WPShieldon\Firewall\Component\ComponentProvider;
+use WPShieldon\Firewall\Component\DeniedTrait;
+use WPShieldon\Firewall\IpTrait;
+use WPShieldon\Firewall\Kernel\Enum;
+use function WPShieldon\Firewall\get_request;
 
 use function implode;
 use function preg_match;
@@ -44,7 +45,7 @@ class UserAgent extends ComponentProvider
      *   getRdns              | Get IP resolved hostname.
      *  ----------------------|---------------------------------------------
      */
-    use IpTrait;
+	use IpTrait;
 
     /**
      *   Public methods       | Desctiotion
@@ -61,80 +62,83 @@ class UserAgent extends ComponentProvider
      *   isDenied             | Check if an item is denied?
      *  ----------------------|---------------------------------------------
      */
-    use DeniedTrait;
+	use DeniedTrait;
 
     /**
      * Constant
      */
-    const STATUS_CODE = 84;
-
-    /**
-     * Robot's user-agent text.
+	public const STATUS_CODE = Enum::REASON_COMPONENT_USERAGENT_DENIED;
+	
+	/**
+	 * Robot's user-agent text.
      *
      * @var string
-     */
-    private $userAgent = '';
+	 */
+	private string $userAgent;
 
     /**
      * Constructor.
      */
-    public function __construct()
-    {
-        $this->userAgent = get_request()->getHeaderLine('user-agent');
+	public function __construct(bool $strictMode = true)
+	{
+		$this->strictMode = $strictMode;
+		$this->userAgent = get_request()->getHeaderLine('user-agent');
 
-        /**
-         * Those robots are considered as bad behavior.
-         * Therefore we list them here.
-         */
-        $this->deniedList = [
+		/**
+		 * Those robots are considered as bad behavior.
+		 * Therefore we list them here.
+		 */
+		$this->deniedList = [
 
-            // Backlink crawlers
-            'Ahrefs',     // http://ahrefs.com/robot/
-            'roger',      // rogerbot (SEOMOZ)
-            'moz.com',    // SEOMOZ crawlers
-            'MJ12bot',    // Majestic crawlers
-            'findlinks',  // http://wortschatz.uni-leipzig.de/findlinks
-            'Semrush',    // http://www.semrush.com/bot.html
-    
-            // Web information crawlers
-            'domain',     // Domain name information crawlers.
-            'copyright',  // Copyright information crawlers.
-    
-            // Others
-            'archive',    // Wayback machine
-        ];
-    }
+			// Backlink crawlers
+			'Ahrefs',     // http://ahrefs.com/robot/
+			'roger',      // rogerbot (SEOMOZ)
+			'moz.com',    // SEOMOZ crawlers
+			'MJ12bot',    // Majestic crawlers
+			'findlinks',  // http://wortschatz.uni-leipzig.de/findlinks
+			'Semrush',    // http://www.semrush.com/bot.html
 
-    /**
-     * {@inheritDoc}
-     *
-     * @return bool
-     */
-    public function isDenied(): bool
-    {
-        if (!empty($this->deniedList)) {
-            if (preg_match('/(' . implode('|', $this->deniedList). ')/i', $this->userAgent)) {
-                return true;
-            }
-        }
+			// Web information crawlers
+			'domain',     // Domain name information crawlers.
+			'copyright',  // Copyright information crawlers.
 
-        if ($this->strictMode) {
-            // If strict mode is on, this value can not be empty.
-            if (empty($this->userAgent)) {
-                return true;
-            }
-        }
+			// Others
+			'archive',    // Wayback machine
+		];
+	}
 
-        return false;
-    }
+	/**
+	 * {@inheritDoc}
+	 * 
+	 * @return bool
+	 */
+	public function isDenied(): bool
+	{
+		if (!empty($this->deniedList)) {
+			if (preg_match('/(' . implode('|', $this->deniedList). ')/i', $this->userAgent)) {
+				error_log('Shieldon - UserAgent - isDenied - true');
+				return true;
+			}
+		}
 
-    /**
-     * {@inheritDoc}
-     *
-     * @return int
-     */
-    public function getDenyStatusCode(): int
-    {
-        return self::STATUS_CODE;
-    }
+		if ($this->strictMode) {
+			// If strict mode is on, this value can not be empty.
+			if (empty($this->userAgent)) {
+				error_log('Shieldon - UserAgent - isDenied - true');
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @return string
+	 */
+	public function getDenyStatusCode(): string
+	{
+		return self::STATUS_CODE;
+	}
 }

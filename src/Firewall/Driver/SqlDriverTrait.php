@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Driver;
+namespace WPShieldon\Firewall\Driver;
 
 use RuntimeException;
 
@@ -33,200 +33,200 @@ use function json_decode;
  */
 trait SqlDriverTrait
 {
-    /**
-     * Fetch data from filter table.
-     *
-     * @param string $ip An IP address.
-     *
+	/**
+	 * Fetch data from filter table.
+	 * 
+	 * @param string $ip An IP address.
+	 * 
      * @return array
-     */
-    protected function doFetchFromFilterTable(string $ip): array
-    {
-        $results = [];
+	 */
+	protected function doFetchFromFilterTable(string $ip): array
+	{
+		$results = [];
 
-        $sql = 'SELECT log_ip, log_data FROM ' . $this->tableFilterLogs . '
+		$sql = 'SELECT log_ip, log_data FROM ' . $this->tableFilterLogs . '
+            WHERE log_ip = :log_ip
+            LIMIT 1';
+		
+		$query = $this->db->prepare($sql);
+		
+		$this->assertPrepare($query);
+
+		$query->bindValue(':log_ip', $ip);
+		$query->execute();
+		$resultData = $query->fetch($this->db::FETCH_ASSOC);
+
+		// No data found.
+		if (is_bool($resultData) && !$resultData) {
+			$resultData = [];
+		}
+
+		if (!empty($resultData['log_data'])) {
+			$results = json_decode($resultData['log_data'], true);
+		}
+
+		return $results;
+	}
+
+	/**
+	 * Fetch data from rule table.
+	 * 
+	 * @param string $ip An IP address.
+	 * 
+     * @return array
+	 */
+	protected function doFetchFromRuleTable(string $ip): array
+	{
+		$results = [];
+
+		$sql = 'SELECT * FROM ' . $this->tableRuleList . '
             WHERE log_ip = :log_ip
             LIMIT 1';
 
-        $query = $this->db->prepare($sql);
+		$query = $this->db->prepare($sql);
 
-        $this->assertPrepare($query);
+		$this->assertPrepare($query);
 
-        $query->bindValue(':log_ip', $ip, $this->db::PARAM_STR);
-        $query->execute();
-        $resultData = $query->fetch($this->db::FETCH_ASSOC);
+		$query->bindValue(':log_ip', $ip);
+		$query->execute();
+		$resultData = $query->fetch($this->db::FETCH_ASSOC);
 
-        // No data found.
-        if (is_bool($resultData) && !$resultData) {
-            $resultData = [];
-        }
+		// No data found.
+		if (is_bool($resultData) && !$resultData) {
+			$resultData = [];
+		}
 
-        if (!empty($resultData['log_data'])) {
-            $results = json_decode($resultData['log_data'], true);
-        }
+		if (is_array($resultData)) {
+			$results = $resultData;
+		}
 
-        return $results;
-    }
+		return $results;
+	}
 
-    /**
-     * Fetch data from rule table.
-     *
-     * @param string $ip An IP address.
-     *
+	/**
+	 * Fetch data from session table.
+	 * 
+	 * @param string $id A session ID.
+	 * 
      * @return array
-     */
-    protected function doFetchFromRuleTable(string $ip): array
-    {
-        $results = [];
+	 */
+	protected function doFetchFromSessionTable(string $id): array
+	{
+		$results = [];
 
-        $sql = 'SELECT * FROM ' . $this->tableRuleList . '
-            WHERE log_ip = :log_ip
-            LIMIT 1';
-
-        $query = $this->db->prepare($sql);
-
-        $this->assertPrepare($query);
-        
-        $query->bindValue(':log_ip', $ip, $this->db::PARAM_STR);
-        $query->execute();
-        $resultData = $query->fetch($this->db::FETCH_ASSOC);
-
-        // No data found.
-        if (is_bool($resultData) && !$resultData) {
-            $resultData = [];
-        }
-
-        if (is_array($resultData)) {
-            $results = $resultData;
-        }
-
-        return $results;
-    }
-
-    /**
-     * Fetch data from session table.
-     *
-     * @param string $id A session ID.
-     *
-     * @return array
-     */
-    protected function doFetchFromSessionTable(string $id): array
-    {
-        $results = [];
-
-        $sql = 'SELECT * FROM ' . $this->tableSessions . '
+		$sql = 'SELECT * FROM ' . $this->tableSessions . '
             WHERE id = :id
             LIMIT 1';
 
-      
-        $query = $this->db->prepare($sql);
 
-        $this->assertPrepare($query);
+		$query = $this->db->prepare($sql);
+		
+		$this->assertPrepare($query);
 
-        $query->bindValue(':id', $id, $this->db::PARAM_STR);
-        $query->execute();
-        $resultData = $query->fetch($this->db::FETCH_ASSOC);
+		$query->bindValue(':id', $id);
+		$query->execute();
+		$resultData = $query->fetch($this->db::FETCH_ASSOC);
 
-        // No data found.
-        if (is_bool($resultData) && !$resultData) {
-            $resultData = [];
-        }
+		// No data found.
+		if (is_bool($resultData) && !$resultData) {
+			$resultData = [];
+		}
 
-        if (is_array($resultData)) {
-            $results = $resultData;
-        }
+		if (is_array($resultData)) {
+			$results = $resultData;
+		}
 
-        return $results;
-    }
+		return $results;
+	}
 
-    /**
-     * Fetch all data from filter table.
-     *
+	/**
+	 * Fetch all data from filter table.
+	 * 
      * @return array
-     */
-    protected function doFetchAllFromFilterTable(): array
-    {
-        $results = [];
+	 */
+	protected function doFetchAllFromFilterTable(): array
+	{
+		$results = [];
 
-        $sql = 'SELECT log_ip, log_data FROM ' . $this->tableFilterLogs;
+		$sql = 'SELECT log_ip, log_data FROM ' . $this->tableFilterLogs;
 
-        $query = $this->db->prepare($sql);
+		$query = $this->db->prepare($sql);
 
-        $this->assertPrepare($query);
+		$this->assertPrepare($query);
 
-        $query->execute();
-        $resultData = $query->fetchAll($this->db::FETCH_ASSOC);
+		$query->execute();
+		$resultData = $query->fetchAll($this->db::FETCH_ASSOC);
 
-        if (is_array($resultData)) {
-            $results = $resultData;
-        }
+		if (is_array($resultData)) {
+			$results = $resultData;
+		}
 
-        return $results;
-    }
+		return $results;
+	}
 
-    /**
-     * Fetch all data from filter table.
-     *
+	/**
+	 * Fetch all data from filter table.
+	 * 
      * @return array
-     */
-    protected function doFetchAllFromRuleTable(): array
-    {
-        $results = [];
+	 */
+	protected function doFetchAllFromRuleTable(): array
+	{
+		$results = [];
 
-        $sql = 'SELECT * FROM ' . $this->tableRuleList;
+		$sql = 'SELECT * FROM ' . $this->tableRuleList;
 
-        $query = $this->db->prepare($sql);
+		$query = $this->db->prepare($sql);
 
-        $this->assertPrepare($query);
+		$this->assertPrepare($query);
 
-        $query->execute();
-        $resultData = $query->fetchAll($this->db::FETCH_ASSOC);
+		$query->execute();
+		$resultData = $query->fetchAll($this->db::FETCH_ASSOC);
 
-        if (is_array($resultData)) {
-            $results = $resultData;
-        }
+		if (is_array($resultData)) {
+			$results = $resultData;
+		}
 
-        return $results;
-    }
+		return $results;
+	}
 
-    /**
-     * Fetch all data from session table.
-     *
+	/**
+	 * Fetch all data from session table.
+	 * 
      * @return array
-     */
-    protected function doFetchAllFromSessionTable(): array
-    {
-        $results = [];
+	 */
+	protected function doFetchAllFromSessionTable(): array
+	{
+		$results = [];
 
-        $sql = 'SELECT * FROM ' . $this->tableSessions . ' ORDER BY microtimestamp ASC';
+		$sql = 'SELECT * FROM ' . $this->tableSessions . ' ORDER BY microtimestamp ASC';
 
-        $query = $this->db->prepare($sql);
+		$query = $this->db->prepare($sql);
 
-        $this->assertPrepare($query);
+		$this->assertPrepare($query);
 
-        $query->execute();
-        $resultData = $query->fetchAll($this->db::FETCH_ASSOC);
+		$query->execute();
+		$resultData = $query->fetchAll($this->db::FETCH_ASSOC);
 
-        if (is_array($resultData)) {
-            $results = $resultData;
-        }
+		if (is_array($resultData)) {
+			$results = $resultData;
+		}
 
-        return $results;
-    }
+		return $results;
+	}
 
-    /**
-     * Check the prepare statement status.
-     *
-     * @param object|bool $status Return false if failed.
-     *
+	/**
+	 * Check the prepare statement status.
+	 * 
+	 * @param object|bool $status Return false if failed.
+	 * 
      * @return void
-     */
-    protected function assertPrepare($status): void
-    {
-        if (!$status) {
-            throw new RuntimeException(
-                json_encode($this->db->errorInfo())
-            );
-        }
-    }
+	 */
+	protected function assertPrepare($status): void
+	{
+		if (!$status) {
+			throw new RuntimeException(
+				json_encode($this->db->errorInfo())
+			);
+		}
+	}
 }

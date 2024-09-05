@@ -20,12 +20,12 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Captcha;
+namespace WPShieldon\Firewall\Captcha;
 
-use Shieldon\Firewall\Captcha\CaptchaProvider;
+use WPShieldon\Firewall\Captcha\CaptchaProvider;
 
-use function Shieldon\Firewall\get_request;
-use function Shieldon\Firewall\unset_superglobal;
+use function WPShieldon\Firewall\get_request;
+use function WPShieldon\Firewall\unset_superglobal;
 use CurlHandle; // PHP 8
 use function curl_error;
 use function curl_exec;
@@ -39,156 +39,152 @@ use function json_decode;
  */
 class ReCaptcha extends CaptchaProvider
 {
-    /**
-     * The site key.
+	/**
+	 * The site key.
      *
      * @var string
-     */
-    protected $key = '';
+	 */
+	protected string $key = '';
 
-    /**
-     * The secret key.
+	/**
+	 * The secret key.
      *
      * @var string
-     */
-    protected $secret = '';
+	 */
+	protected string $secret = '';
 
-    /**
-     * The version.
+	/**
+	 * The version.
      *
      * @var string
-     */
-    protected $version = 'v2';
+	 */
+	protected string $version = 'v2';
 
-    /**
-     * The language code of the UI.
+	/**
+	 * The language code of the UI.
      *
      * @var string
-     */
-    protected $lang = 'en';
+	 */
+	protected string $lang = 'en';
 
-    /**
-     * The URL of Google ReCaptcha API.
+	/**
+	 * The URL of Google ReCaptcha API.
      *
      * @var string
-     */
-    protected $googleServiceUrl = 'https://www.google.com/recaptcha/api/siteverify';
+	 */
+	protected string $googleServiceUrl = 'https://www.google.com/recaptcha/api/siteverify';
 
-    /**
+	/**
      * Constructor.
      *
-     * It will implement default configuration settings here.
+	 * It will implement default configuration settings here.
      *
-     * @param array $config The settings of Google ReCpatcha.
+	 * @param array $config The settings of Google ReCpatcha.
      *
-     * @return void
-     */
-    public function __construct(array $config = [])
-    {
-        parent::__construct();
-        
-        foreach ($config as $k => $v) {
-            if (isset($this->{$k})) {
-                $this->{$k} = $v;
-            }
-        }
-    }
+	 * @return void
+	 */
+	public function __construct(array $config = [])
+	{
+		parent::__construct();
 
-    /**
-     * Response the result from Google service server.
+		foreach ($config as $k => $v) {
+			if (isset($this->{$k})) {
+				$this->{$k} = $v;
+			}
+		}
+	}
+
+	/**
+	 * Response the result from Google service server.
      *
      * @return bool
-     */
-    public function response(): bool
-    {
-        $postParams = get_request()->getParsedBody();
+	 */
+	public function response(): bool
+	{
+		$postParams = get_request()->getParsedBody();
 
-        if (empty($postParams['g-recaptcha-response'])) {
-            return false;
-        }
+		if (empty($postParams['g-recaptcha-response'])) {
+			return false;
+		}
 
-        $flag = false;
-        $reCaptchaToken = str_replace(["'", '"'], '', $postParams['g-recaptcha-response']);
+		$flag = false;
+		$reCaptchaToken = str_replace(["'", '"'], '', $postParams['g-recaptcha-response']);
 
-        $postData = [
-            'secret' => $this->secret,
-            'response' => $reCaptchaToken,
-        ];
+		$postData = [
+			'secret' => $this->secret,
+			'response' => $reCaptchaToken,
+		];
 
-        $ch = curl_init();
+		$ch = curl_init();
 
-        if (version_compare(phpversion(), '8.0.0', '>=')) {
-            if (!$ch instanceof CurlHandle) {
-                // @codeCoverageIgnoreStart
-                return false;
-                // @codeCoverageIgnoreEnd
-            }
-        } else {
-            if (!is_resource($ch)) {
-                // @codeCoverageIgnoreStart
-                return false;
-                // @codeCoverageIgnoreEnd
-            }
-        }
+		if (PHP_VERSION_ID >= 80000) {
+			if (!$ch instanceof CurlHandle) {
+				return false;
+			}
+		}
+		//      if (!is_resource($ch)) {
+		//          error_log("Shieldon - CH is not resource");
+		//          return false;
+		//      } else {
+		//          error_log("Shieldon - CH is resource");
+		//      }
 
-        curl_setopt($ch, CURLOPT_URL, $this->googleServiceUrl);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Expect:'));
-        curl_setopt($ch, CURLOPT_POST, 2);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+		curl_setopt($ch, CURLOPT_URL, $this->googleServiceUrl);
+		curl_setopt($ch, CURLOPT_HTTPHEADER, ['Expect:']);
+		curl_setopt($ch, CURLOPT_POST, 2);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
-        $ret = curl_exec($ch);
+		$ret = curl_exec($ch);
 
-        // @codeCoverageIgnoreStart
-        if (curl_errno($ch)) {
-            echo 'error:' . curl_error($ch);
-        }
-        // @codeCoverageIgnoreEnd
+		if (curl_errno($ch)) {
+			echo 'error:' . curl_error($ch);
+		}
 
-        if (isset($ret) && is_string($ret)) {
-            $tmp = json_decode($ret);
-            if ($tmp->success == true) {
-                $flag = true;
-            }
-        }
+		if (isset($ret) && is_string($ret)) {
+			$tmp = json_decode($ret);
+			if ($tmp->success === true) {
+				$flag = true;
+			}
+		}
 
-        curl_close($ch);
+		curl_close($ch);
 
-        // Prevent detecting POST method on RESTful frameworks.
-        unset_superglobal('g-recaptcha-response', 'post');
+		// Prevent detecting POST method on RESTful frameworks.
+		unset_superglobal('g-recaptcha-response', 'post');
 
-        return $flag;
-    }
+		return $flag;
+	}
 
-    /**
-     * Output a required HTML for reCaptcha v2.
+	/**
+	 * Output a required HTML for reCaptcha v2.
      *
      * @return string
-     */
-    public function form(): string
-    {
-        $html = '<div>';
-        $html .= '<div style="display: inline-block">';
+	 */
+	public function form(): string
+	{
+		$html = '<div>';
+		$html .= '<div style="display: inline-block">';
         if ('v3' !== $this->version) {
-            $html .= '<script src="https://www.google.com/recaptcha/api.js?hl=' . $this->lang . '"></script>';
-            $html .= '<div class="g-recaptcha" data-sitekey="' . $this->key . '"></div>';
-        } else {
-            $html .= '<input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response" value="">';
-            $html .= '<script src="https://www.google.com/recaptcha/api.js?render=' .
-                $this->key .'&hl=' . $this->lang . '"></script>';
-            $html .= '<script>';
-            $html .= '    grecaptcha.ready(function() {';
-            $html .= '        grecaptcha.execute("' . $this->key . '", {action: "homepage"}).then(function(token) {';
-            $html .= '            document.getElementById("g-recaptcha-response").value = token;';
-            $html .= '        }); ';
-            $html .= '    });';
-            $html .= '</script>';
-        }
-        $html .= '</div>';
-        $html .= '</div>';
+			$html .= '<script src="https://www.google.com/recaptcha/api.js?hl=' . $this->lang . '"></script>';
+			$html .= '<div class="g-recaptcha" data-sitekey="' . $this->key . '"></div>';
+		} else {
+			$html .= '<input type="hidden" name="g-recaptcha-response" id="g-recaptcha-response" value="">';
+			$html .= '<script src="https://www.google.com/recaptcha/api.js?render=' .
+			$this->key .'&hl=' . $this->lang . '"></script>';
+			$html .= '<script>';
+			$html .= '    grecaptcha.ready(function() {';
+			$html .= '        grecaptcha.execute("' . $this->key . '", {action: "homepage"}).then(function(token) {';
+			$html .= '            document.getElementById("g-recaptcha-response").value = token;';
+			$html .= '        }); ';
+			$html .= '    });';
+			$html .= '</script>';
+		}
+		$html .= '</div>';
+		$html .= '</div>';
 
-        return $html;
-    }
+		return $html;
+	}
 }

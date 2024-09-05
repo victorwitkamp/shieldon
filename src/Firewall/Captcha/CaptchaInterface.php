@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Captcha;
+namespace WPShieldon\Firewall\Captcha;
 
 /**
  * CaptchaInterface
@@ -32,12 +32,12 @@ interface CaptchaInterface
      *
      * @return bool
      */
-    public function response(): bool;
+	public function response(): bool;
 
     /**
      * Output a required HTML.
      *
      * @return string
      */
-    public function form(): string;
+	public function form(): string;
 }

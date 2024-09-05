@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Firewall\Messenger;
+namespace WPShieldon\Firewall\Firewall\Messenger;
 
 use Shieldon\Messenger\Messenger\MessengerInterface;
 use function array_map;
@@ -33,57 +33,56 @@ use function ucwords;
  */
 class MessengerFactory
 {
-    /**
-     * Create a messenger instance.
-     *
-     * @param string $messenger The messenger's ID string.
+	/**
+	 * Create a messenger instance.
+	 * 
+	 * @param string $messenger The messenger's ID string.
      * @param array  $setting   The configuration of that messanger.
-     *
+	 * 
      * @return MessengerInterface
-     */
-    public static function getInstance(string $messenger, array $setting): MessengerInterface
-    {
-        $className = '\Shieldon\Firewall\Firewall\Messenger\Item' . self::getCamelCase($messenger);
+	 */
+	public static function getInstance(string $messenger, array $setting): MessengerInterface
+	{
+		$className = '\WPShieldon\Firewall\Firewall\Messenger\Item' . self::getCamelCase($messenger);
 
-        return $className::get($setting);
-    }
+		return $className::get($setting);
+	}
 
-    /**
-     * Check whether a messenger is available or not.
-     *
+	/**
+	 * Check whether a messenger is available or not.
+	 * 
      * @param array  $setting   The configuration of that messanger.
-     *
+	 * 
      * @return bool
-     */
-    public static function check(array $setting): bool
-    {
-        // If the settings is not set correctly.
-        if (empty($setting['enable']) || empty($setting['confirm_test'])) {
-            return false;
-        }
+	 */
+	public static function check(array $setting): bool
+	{
+		// If the settings is not set correctly.
+		if (empty($setting['enable']) || empty($setting['confirm_test'])) {
+			return false;
+		}
 
-        return true;
-    }
+		return true;
+	}
 
-    /**
-     * Covert string with dashes into camel-case string.
-     *
-     * @param string $string A string with dashes.
-     *
+	/**
+	 * Covert string with dashes into camel-case string.
+	 * 
+	 * @param string $string A string with dashes.
+	 * 
      * @return string
-     */
-    public static function getCamelCase(string $string = ''): string
-    {
-        $str = explode('_', $string);
-        $str = implode(
-            '',
-            array_map(
-                function ($word) {
-                    return ucwords($word);
-                },
-                $str
-            )
-        );
-        return $str;
-    }
+	 */
+	public static function getCamelCase(string $string = ''): string
+	{
+		$str = explode('_', $string);
+		return implode(
+			'',
+			array_map(
+				function ($word) {
+					return ucwords($word);
+				},
+				$str
+			)
+		);
+	}
 }

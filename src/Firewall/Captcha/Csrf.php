@@ -20,68 +20,68 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Captcha;
+namespace WPShieldon\Firewall\Captcha;
 
-use Shieldon\Firewall\Captcha\CaptchaProvider;
+use WPShieldon\Firewall\Captcha\CaptchaProvider;
 
 /**
  * Add form fields for the CSRF features of some frameworks.
  */
 class Csrf extends CaptchaProvider
 {
-    /**
-     * Form input name.
+	/**
+	 * Form input name.
      *
      * @var string
-     */
-    protected $name = '';
-
-    /**
-     * Form input value.
+	 */
+	protected string $name = '';
+	
+	/**
+	 * Form input value.
      *
      * @var string
-     */
-    protected $value = '';
+	 */
+	protected string $value = '';
 
-    /**
-     * Constructor.
-     *
-     * It will implement default configuration settings here.
-     *
-     * @param array $config The field of the CSRF configuration.
-     *
-     * @return void
-     */
-    public function __construct(array $config = [])
-    {
-        parent::__construct();
-
+	/**
+	 * Constructor.
+	 * 
+	 * It will implement default configuration settings here.
+	 * 
+	 * @param array $config The field of the CSRF configuration.
+	 * 
+	 * @return void
+	 */
+	public function __construct(array $config = [])
+	{
+		parent::__construct();
+		
         foreach ($config as $k => $v) {
             if (isset($this->{$k})) {
-                $this->{$k} = $v;
-            }
-        }
-    }
+				$this->{$k} = $v;
+			}
+		}
+	}
 
-    /**
-     * Response the result.
-     *
+	/**
+	 * Response the result.
+	 * 
      * @return bool
-     */
-    public function response(): bool
-    {
-        return true;
-    }
+	 */
+	public function response(): bool
+	{
+		return true;
+	}
 
-    /**
-     * Output a required HTML.
-     *
+	/**
+	 * Output a required HTML.
+	 * 
      * @return string
-     */
-    public function form(): string
-    {
-        $html = '<input type="hidden" name="' . $this->name . '" value="' . $this->value . '">';
+	 */
+	public function form(): string
+	{
+		$html = '<input type="hidden" name="' . $this->name . '" value="' . $this->value . '">';
 
-        return $html;
-    }
+		return $html;
+	}
 }

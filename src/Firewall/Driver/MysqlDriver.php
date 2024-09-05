@@ -20,9 +20,9 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Driver;
+namespace WPShieldon\Firewall\Driver;
 
-use Shieldon\Firewall\Driver\SqlDriverProvider;
+use WPShieldon\Firewall\Driver\SqlDriverProvider;
 use PDO;
 
 /**
@@ -30,16 +30,16 @@ use PDO;
  */
 class MysqlDriver extends SqlDriverProvider
 {
-    /**
-     * Constructor.
+	/**
+	 * Constructor.
      *
      * @param PDO  $pdo   The PDO instance.
-     * @param bool $debug The option to enable debugging or not.
-     *
-     * @return void
-     */
-    public function __construct(PDO $pdo, bool $debug = false)
-    {
-        parent::__construct($pdo, $debug);
-    }
+	 * @param bool $debug The option to enable debugging or not.
+	 * 
+	 * @return void
+	 */
+	public function __construct(PDO $pdo, bool $debug = false)
+	{
+		parent::__construct($pdo, $debug);
+	}
 }

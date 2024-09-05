@@ -20,39 +20,39 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Firewall\Messenger;
+namespace WPShieldon\Firewall\Firewall\Messenger;
 
 use Shieldon\Messenger\Messenger\MessengerInterface;
 use Shieldon\Messenger\Mailgun;
-use function Shieldon\Firewall\__;
+use function WPShieldon\Firewall\__;
 
 /**
  * Get an item of messenger. It is Mailgun.
  */
 class ItemMailgun
 {
-    /**
-     * Initialize and get the instance.
+	/**
+	 * Initialize and get the instance.
      *
-     * @param array $setting The configuration of that messanger.
+	 * @param array $setting The configuration of that messanger.
      *
      * @return MessengerInterface
-     */
-    public static function get(array $setting): MessengerInterface
-    {
+	 */
+	public static function get(array $setting): MessengerInterface
+	{
         $apiKey     = $setting['config']['api_key'] ?? '';
         $domain     = $setting['config']['domain_name'] ?? '';
         $sender     = $setting['config']['sender'] ?? '';
-        $recipients = $setting['config']['recipients'] ?? [];
+		$recipients = $setting['config']['recipients'] ?? [];
 
-        $instance = new Mailgun($apiKey, $domain);
-        $instance->setSubject(__('core', 'messenger_text_mail_subject'));
-        $instance->addSender($sender);
+		$instance = new Mailgun($apiKey, $domain);
+		$instance->setSubject(__('core', 'messenger_text_mail_subject'));
+		$instance->addSender($sender);
 
-        foreach ($recipients as $recipient) {
-            $instance->addRecipient($recipient);
-        }
+		foreach ($recipients as $recipient) {
+			$instance->addRecipient($recipient);
+		}
 
-        return $instance;
-    }
+		return $instance;
+	}
 }

@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Captcha;
+namespace WPShieldon\Firewall\Captcha;
 
 /**
  * ComponentPrivider
@@ -30,21 +30,21 @@ abstract class CaptchaProvider implements CaptchaInterface
     /**
      * Constroctor.
      */
-    public function __construct()
-    {
-    }
+	public function __construct()
+	{
+	}
 
-    /**
-     * Is denied?
+	/**
+	 * Is denied?
      *
      * @return bool
-     */
-    abstract public function response(): bool;
+	 */
+	abstract public function response(): bool;
 
-    /**
-     * Unique deny status code.
+	/**
+	 * Unique deny status code.
      *
      * @return string
-     */
-    abstract public function form(): string;
+	 */
+	abstract public function form(): string;
 }
