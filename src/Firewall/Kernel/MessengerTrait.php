@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace WPShieldon\Firewall\Kernel;
+namespace Shieldon\Firewall\Kernel;
 
 use Shieldon\Messenger\Messenger\MessengerInterface;
 use RuntimeException;
@@ -30,49 +30,49 @@ use RuntimeException;
  */
 trait MessengerTrait
 {
-	/**
+    /**
      *   Public methods       | Desctiotion
      *  ----------------------|---------------------------------------------
      *   setMessenger         | Set a messenger
      *  ----------------------|---------------------------------------------
      */
 
-	/**
-	 * The ways Shieldon send a message to when someone has been blocked.
-	 * The collection of \Shieldon\Messenger\Messenger\MessengerInterface
+    /**
+     * The ways Shieldon send a message to when someone has been blocked.
+     * The collection of \Shieldon\Messenger\Messenger\MessengerInterface
      *
      * @var array
-	 */
-	protected array $messenger = [];
+     */
+    protected $messenger = [];
 
-	/**
-	 * The message that will be sent to the third-party API.
-	 * 
+    /**
+     * The message that will be sent to the third-party API.
+     *
      * @var string
-	 */
-	protected string $msgBody = '';
+     */
+    protected $msgBody = '';
 
-	/**
-	 * Get a class name without namespace string.
-	 * 
-	 * @param object $instance Class
+    /**
+     * Get a class name without namespace string.
+     *
+     * @param object $instance Class
      *
      * @return string
-	 */
-	abstract protected function getClassName($instance): string;
-    
-	/**
+     */
+    abstract protected function getClassName($instance): string;
+
+    /**
      * Set a messenger
      *
      * @param MessengerInterface $instance The messenger instance.
      *
      * @return void
      */
-	public function setMessenger(MessengerInterface $instance): void
-	{
-		$class = $this->getClassName($instance);
-		$this->messenger[$class] = $instance;
-	}
+    public function setMessenger(MessengerInterface $instance): void
+    {
+        $class = $this->getClassName($instance);
+        $this->messenger[$class] = $instance;
+    }
 
     /**
      * Set the message body.
@@ -81,34 +81,34 @@ trait MessengerTrait
      *
      * @return void
      */
-	protected function setMessageBody(string $message = ''): void
-	{
-		$this->msgBody = $message;
-	}
+    protected function setMessageBody(string $message = ''): void
+    {
+        $this->msgBody = $message;
+    }
 
-
+    // @codeCoverageIgnoreStart
 
     /**
      * Undocumented function
      *
      * @return void
-     */	
-	protected function triggerMessengers(): void
-	{
-		if (empty($this->msgBody)) {
-			return;
-		}
+     */
+    protected function triggerMessengers(): void
+    {
+        if (empty($this->msgBody)) {
+            return;
+        }
 
-		try {
-			foreach ($this->messenger as $messenger) {
-				$messenger->setTimeout(2);
-				$messenger->send($this->msgBody);
-			}
+        try {
+            foreach ($this->messenger as $messenger) {
+                $messenger->setTimeout(2);
+                $messenger->send($this->msgBody);
+            }
+        // phpcs:ignore
+        } catch (RuntimeException $e) {
+            // Do not throw error, becasue the third-party services might be unavailable.
+        }
+    }
 
-		} catch (RuntimeException $e) {
-			// Do not throw error, becasue the third-party services might be unavailable.
-		}
-	}
-
-
+    // @codeCoverageIgnoreEnd
 }

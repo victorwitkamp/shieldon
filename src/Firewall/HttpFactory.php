@@ -20,9 +20,9 @@
 
 declare(strict_types=1);
 
-namespace WPShieldon\Firewall;
+namespace Shieldon\Firewall;
 
-use WPShieldon\Firewall\Session;
+use Shieldon\Firewall\Session;
 use Shieldon\Psr17\ResponseFactory;
 use Shieldon\Psr17\ServerRequestFactory;
 use Shieldon\Psr17\StreamFactory;
@@ -35,15 +35,15 @@ use Shieldon\Psr7\Stream;
  */
 class HttpFactory
 {
-	/**
+    /**
      * Create a server-side request.
      *
      * @return ServerRequest
      */
     public static function createRequest(): ServerRequest
-	{
-		return ServerRequestFactory::fromGlobal();
-	}
+    {
+        return ServerRequestFactory::fromGlobal();
+    }
 
     /**
      * Create a server-side response
@@ -51,9 +51,9 @@ class HttpFactory
      * @return Response
      */
     public static function createResponse(): Response
-	{
-		return ResponseFactory::fromNew();
-	}
+    {
+        return ResponseFactory::fromNew();
+    }
 
     /**
      * Create a server-side response
@@ -61,9 +61,9 @@ class HttpFactory
      * @return Stream
      */
     public static function createStream(): Stream
-	{
-		return StreamFactory::fromNew();
-	}
+    {
+        return StreamFactory::fromNew();
+    }
 
     /**
      * Create a session by using Shieldon's Session driver.
@@ -73,7 +73,7 @@ class HttpFactory
      * @return Session
      */
     public static function createSession($id = ''): Session
-	{
-		return new Session($id);
-	}
+    {
+        return new Session($id);
+    }
 }

@@ -20,11 +20,10 @@
 
 declare(strict_types=1);
 
-namespace WPShieldon\Firewall\Driver;
+namespace Shieldon\Firewall\Driver;
 
-use WPShieldon\Firewall\Driver\AbstractDriver;
+use Shieldon\Firewall\Driver\AbstractDriver;
 use RuntimeException;
-use function in_array;
 
 /**
  * Driver Provider.
@@ -36,108 +35,108 @@ class DriverProvider extends AbstractDriver
      *
      * @var string
      */
-	protected string $tableFilterLogs = 'shieldon_filter_logs';
+    protected $tableFilterLogs = 'shieldon_filter_logs';
 
     /**
      * Data table name for whitelist.
      *
      * @var string
      */
-	protected string $tableRuleList = 'shieldon_rule_list';
+    protected $tableRuleList = 'shieldon_rule_list';
 
     /**
      * Data table for recording online session count.
      *
      * @var string
      */
-	protected string $tableSessions = 'shieldon_sessions';
+    protected $tableSessions = 'shieldon_sessions';
 
     /**
      * The prefix of the database tables, or the name of file directory.
      *
      * @var string
      */
-	protected string $channel = '';
-	
+    protected $channel = '';
+
     /**
      * Check if is initialized or not.
      *
      * @var bool
      */
-	protected bool $isInitialized = false;
+    protected $isInitialized = false;
 
     /**
      * The table types.
      *
      * @var array
-     */	
-	protected array $tableTypes = [
-		'rule',
-		'filter',
-		'session'
-	];
+     */
+    protected $tableTypes = [
+        'rule',
+        'filter',
+        'session',
+    ];
 
-	/**
+    /**
      * Set data channel.
      *
      * @param string $channel The prefix of the data tables.
      *
      * @return void
      */
-	public function setChannel(string $channel): void
-	{
-		$this->channel = $channel;
+    public function setChannel(string $channel): void
+    {
+        $this->channel = $channel;
 
-		if (!empty($this->channel)) {
-			$this->tableFilterLogs = $this->channel . '_shieldon_filter_logs';
-			$this->tableRuleList = $this->channel . '_shieldon_rule_list';
-			$this->tableSessions = $this->channel . '_shieldon_sessions';
-		}
-	}
+        if (!empty($this->channel)) {
+            $this->tableFilterLogs = $this->channel . '_shieldon_filter_logs';
+            $this->tableRuleList = $this->channel . '_shieldon_rule_list';
+            $this->tableSessions = $this->channel . '_shieldon_sessions';
+        }
+    }
 
-	/**
+    /**
      * Get channel name.
      *
      * @return string
      */
-	public function getChannel(): string
-	{
-		return $this->channel;
-	}
+    public function getChannel(): string
+    {
+        return $this->channel;
+    }
 
-	/**
-	 * Return parsed full data structure.
-	 * 
-	 * @param array  $data The data needed to be parsed.
-	 * @param string $type The type of data table. accepts: filter | session | rule
-	 * 
+    /**
+     * Return parsed full data structure.
+     *
+     * @param array  $data The data needed to be parsed.
+     * @param string $type The type of data table. accepts: filter | session | rule
+     *
      * @return array
-	 */
-	public function parseData(array $data, string $type = 'filter'): array
-	{
-		$parsedData = [];
+     */
+    public function parseData(array $data, string $type = 'filter'): array
+    {
+        $parsedData = [];
 
-		switch ($type) {
+        switch ($type) {
             // Rule table data structure.
-			case 'rule':
-				break;
-			
+            case 'rule':
+                break;
+
             // Session table data structure.
-			case 'session':
+            case 'session':
                 break;
 
             // Log table data structure.
-			case 'filter':
-				// no break
-			default:
-				$fields = [
-					
-					// Basic IP data.
+            case 'filter':
+                // no break
+            default:
+                $fields = [
+
+                    // Basic IP data.
                     'ip'       => 'string',
                     'session'  => 'string',
                     'hostname' => 'string',
 
-					// timestamp while visting first time.
+                    // timestamp while visting first time.
                     'first_time_s'    => 'int',
                     'first_time_m'    => 'int',
                     'first_time_h'    => 'int',
@@ -145,124 +144,126 @@ class DriverProvider extends AbstractDriver
                     'first_time_flag' => 'int',
                     'last_time'       => 'int',
 
-					// Signals for flagged bad behavior.
+                    // Signals for flagged bad behavior.
                     'flag_js_cookie'     => 'int',
                     'flag_multi_session' => 'int',
                     'flag_empty_referer' => 'int',
 
-					// Pageview count.
+                    // Pageview count.
                     'pageviews_cookie' => 'int',
                     'pageviews_s'      => 'int',
                     'pageviews_m'      => 'int',
                     'pageviews_h'      => 'int',
-					'pageviews_d'      => 'int',
-				];
+                    'pageviews_d'      => 'int',
+                ];
 
-				foreach ($fields as $k => $v) {
-					$tmp = $data[$k] ?? '';
+                foreach ($fields as $k => $v) {
+                    $tmp = $data[$k] ?? '';
 
                     if ('string' === $v) {
                         $parsedData[$k] = (string) $tmp;
-					}
+                    }
 
                     if ('int' === $v) {
                         $parsedData[$k] = (int) $tmp;
-					}
-				}
-				break;
-			// end switch
-		}
+                    }
+                }
+                break;
+            // end switch
+        }
 
-		return $parsedData;
-	}
+        return $parsedData;
+    }
 
-	/**
+    // @codeCoverageIgnoreStart
+
+    /**
      * Implement fetch.
-	 * 
+     *
      * @param string $ip   The data id of the entry to fetch.
-	 * @param string $type The type of data table. accepts: filter | session | rule
-	 * 
-	 * @return array The data or an empty array.
-	 */
-	protected function doFetch(string $ip, string $type = 'filter'): array
-	{
-		return [];
-	}
+     * @param string $type The type of data table. accepts: filter | session | rule
+     *
+     * @return array The data or an empty array.
+     */
+    protected function doFetch(string $ip, string $type = 'filter'): array
+    {
+        return [];
+    }
 
-	/**
+    /**
      * Implement fetch all.
-	 * 
-	 * @param string $type The type of data table. accepts: filter | session | rule
-	 * 
-	 * @return array The data or an empty array.
-	 */
-	protected function doFetchAll(string $type = 'filter'): array
-	{
-		return [];
-	}
+     *
+     * @param string $type The type of data table. accepts: filter | session | rule
+     *
+     * @return array The data or an empty array.
+     */
+    protected function doFetchAll(string $type = 'filter'): array
+    {
+        return [];
+    }
 
-	/**
+    /**
      * Implement has.
-	 * 
+     *
      * @param string $ip   The data id of the entry to check for.
-	 * @param string $type The type of data table. accepts: filter | session | rule
-	 * 
+     * @param string $type The type of data table. accepts: filter | session | rule
+     *
      * @return bool
-	 */
-	protected function checkExist(string $ip, string $type = 'filter'): bool
-	{
-		return false;
-	}
+     */
+    protected function checkExist(string $ip, string $type = 'filter'): bool
+    {
+        return false;
+    }
 
-	/**
+    /**
      * Implement save.
-	 * 
+     *
      * @param string $ip     The IP address as the data id.
      * @param array  $data   The data.
      * @param string $type   The type of the data table.
-	 * @param int    $expire The data will be deleted after expiring.
-	 * 
+     * @param int    $expire The data will be deleted after expiring.
+     *
      * @return bool
-	 */
-	protected function doSave(string $ip, array $data, string $type = 'filter', $expire = 0): bool
-	{
-		return false;
-	}
+     */
+    protected function doSave(string $ip, array $data, string $type = 'filter', $expire = 0): bool
+    {
+        return false;
+    }
 
-	/**
+    /**
      * Implement delete.
-	 * 
+     *
      * @param string $ip   The IP address.
-	 * @param string $type The type of data table. accepts: filter | session | rule
-	 * 
+     * @param string $type The type of data table. accepts: filter | session | rule
+     *
      * @return bool
-	 */
-	protected function doDelete(string $ip, string $type = 'filter'): bool
-	{
-		return false;
-	}
+     */
+    protected function doDelete(string $ip, string $type = 'filter'): bool
+    {
+        return false;
+    }
 
     /**
      * Rebuild data tables.
      *
      * @return bool
      */
-	protected function doRebuild(): bool
-	{
-		return false;
-	}
+    protected function doRebuild(): bool
+    {
+        return false;
+    }
 
-	/**
+    /**
      * Initialize data tables.
-	 * 
-	 * @param bool $dbCheck This is for creating data tables automatically
-	 *                      Turn it off, if you don't want to check data tables every pageview.
-	 * 
+     *
+     * @param bool $dbCheck This is for creating data tables automatically
+     *                      Turn it off, if you don't want to check data tables every pageview.
+     *
      * @return void
-	 */
-	protected function doInitialize(bool $dbCheck = true): void
-	{
-	}
+     */
+    protected function doInitialize(bool $dbCheck = true): void
+    {
+    }
 
     /**
      * Check data type.
@@ -271,12 +272,13 @@ class DriverProvider extends AbstractDriver
      *
      * @return void
      */
-	protected function assertInvalidDataTable(string $type): void
-	{
-		if (!in_array($type, $this->tableTypes)) {
-			throw new RuntimeException(
-				'Invalid data type of the data tables.'
-			);
-		}
-	}
+    protected function assertInvalidDataTable(string $type): void
+    {
+        if (!in_array($type, $this->tableTypes)) {
+            throw new RuntimeException(
+                'Invalid data type of the data tables.'
+            );
+        }
+    }
+    // @codeCoverageIgnoreEnd
 }

@@ -20,79 +20,79 @@
 
 declare(strict_types=1);
 
-namespace WPShieldon\Firewall\Driver;
+namespace Shieldon\Firewall\Driver;
 
 /**
  * Interface for Data drivers.
  */
 interface DriverInterface
 {
-	/**
-	 * Get an entry from the driver provider.
-	 * 
+    /**
+     * Get an entry from the driver provider.
+     *
      * @param string $ip   The data id of the entry to fetch.
-	 * @param string $type The type of data table. accepts: filter | session | rule
-	 * 
-	 * @return array The data or an empty array.
-	 */
-	public function get(string $ip, string $type = 'filter'): array;
+     * @param string $type The type of data table. accepts: filter | session | rule
+     *
+     * @return array The data or an empty array.
+     */
+    public function get(string $ip, string $type = 'filter'): array;
 
-	/**
-	 * Get all entries from the driver provider.
-	 * 
-	 * @param string $type The type of data table. accepts: filter | session | rule
-	 * 
-	 * @return array The data or an empty array.
-	 */
-	public function getAll(string $type = 'filter'): array;
+    /**
+     * Get all entries from the driver provider.
+     *
+     * @param string $type The type of data table. accepts: filter | session | rule
+     *
+     * @return array The data or an empty array.
+     */
+    public function getAll(string $type = 'filter'): array;
 
-	/**
-	 * Tests if an entry exists in the data.
-	 * 
+    /**
+     * Tests if an entry exists in the data.
+     *
      * @param string $ip   The IP address as well as the data id.
-	 * @param string $type The type of data table. accepts: filter | session | rule
-	 * 
+     * @param string $type The type of data table. accepts: filter | session | rule
+     *
      * @return bool
-	 */
-	public function has(string $ip, string $type = 'filter'): bool;
+     */
+    public function has(string $ip, string $type = 'filter'): bool;
 
-	/**
-	 * Save data or replace old data to the new.
-	 * 
+    /**
+     * Save data or replace old data to the new.
+     *
      * @param string $ip     The IP address as well as the data id.
      * @param array  $data   The data.
      * @param string $type   The type of data table. accepts: filter | session | rule
-	 * @param int    $expire The data will be deleted after expiring.
-	 * 
+     * @param int    $expire The data will be deleted after expiring.
+     *
      * @return bool
-	 */
-	public function save(string $ip, array $data, string $type = 'filter', int $expire = 0): bool;
+     */
+    public function save(string $ip, array $data, string $type = 'filter', int $expire = 0): bool;
 
-	/**
-	 * Delete a data entry.
-	 * 
+    /**
+     * Delete a data entry.
+     *
      * @param string $ip   The IP address as well as the data id.
-	 * @param string $type The type of data table. accepts: filter | session | rule
-	 * 
-	 * @return bool true if the data entry is deleted successfully.
-	 *              deleting a non-existing entry is considered successful.
-	 *              return false overwise.
-	 */
-	public function delete(string $ip, string $type = 'filter'): bool;
+     * @param string $type The type of data table. accepts: filter | session | rule
+     *
+     * @return bool true if the data entry is deleted successfully.
+     *              deleting a non-existing entry is considered successful.
+     *              return false overwise.
+     */
+    public function delete(string $ip, string $type = 'filter'): bool;
 
-	/**
-	 * Rebuild data table.
-	 * 
+    /**
+     * Rebuild data table.
+     *
      * @return bool
-	 */
-	public function rebuild(): bool;
+     */
+    public function rebuild(): bool;
 
-	/**
-	 * Initial data tables.
-	 * 
-	 * @param bool $dbCheck This is for creating data tables automatically
-	 * 
+    /**
+     * Initial data tables.
+     *
+     * @param bool $dbCheck This is for creating data tables automatically
+     *
      * @return void
-	 */
-	public function init(bool $dbCheck = true): void;
+     */
+    public function init(bool $dbCheck = true): void;
 }

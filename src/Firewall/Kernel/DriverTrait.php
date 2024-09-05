@@ -20,41 +20,41 @@
 
 declare(strict_types=1);
 
-namespace WPShieldon\Firewall\Kernel;
+namespace Shieldon\Firewall\Kernel;
 
-use WPShieldon\Firewall\Driver\DriverProvider;
+use Shieldon\Firewall\Driver\DriverProvider;
 use Shieldon\Event\Event;
 use RuntimeException;
-use function is_null;
+use function php_sapi_name;
 
 /*
  * Messenger Trait is loaded in Kernel instance only.
  */
 trait DriverTrait
 {
-	/**
-	 *   Public methods       | Desctiotion
-	 *  ----------------------|---------------------------------------------
-	 *   setDriver            | Set a data driver.
-	 *   setChannel           | Set a data channel.
-	 *   disableDbBuilder     | disable creating data tables.
-	 *  ----------------------|---------------------------------------------
-	 */
+    /**
+     *   Public methods       | Desctiotion
+     *  ----------------------|---------------------------------------------
+     *   setDriver            | Set a data driver.
+     *   setChannel           | Set a data channel.
+     *   disableDbBuilder     | disable creating data tables.
+     *  ----------------------|---------------------------------------------
+     */
 
     /**
      * Driver for storing data.
      *
      * @var \Shieldon\Firewall\Driver\DriverProvider
      */
-	public ?DriverProvider $driver = null;
+    public $driver;
 
-	/**
-	 * This is for creating data tables automatically
-	 * Turn it off, if you don't want to check data tables every connection.
+    /**
+     * This is for creating data tables automatically
+     * Turn it off, if you don't want to check data tables every connection.
      *
      * @var bool
      */
-	protected bool $isCreateDatabase = true;
+    protected $isCreateDatabase = true;
 
     /**
      * Set a data driver.
@@ -63,88 +63,84 @@ trait DriverTrait
      *
      * @return void
      */
-	public function setDriver(DriverProvider $driver): void
-	{
-		$this->driver = $driver;
+    public function setDriver(DriverProvider $driver): void
+    {
+        $this->driver = $driver;
 
-		/**
-		 * [Hook] `set_channel` - After initializing data driver.
-		 */
-		Event::doDispatch('set_driver', [
-			'driver' => $this->driver,
-		]);
+        /**
+         * [Hook] `set_channel` - After initializing data driver.
+         */
+        Event::doDispatch('set_driver', [
+            'driver' => $this->driver,
+        ]);
 
-		$this->driver->init($this->isCreateDatabase);
+        $this->driver->init($this->isCreateDatabase);
 
-		if ($this->sessionLimit['period']) {
-			$period = $this->sessionLimit['period'];
-		} else {
-			$period = 300;
-		}
+        $period = $this->sessionLimit['period'] ?: 300;
 
-		/**
-		 * [Hook] `set_driver` - After initializing data driver.
-		 */
-		Event::doDispatch('set_session_driver', [
+        /**
+         * [Hook] `set_driver` - After initializing data driver.
+         */
+        Event::doDispatch('set_session_driver', [
             'driver'         => $this->driver,
             'gc_expires'     => $period,
-			'gc_probability' => 1,
+            'gc_probability' => 1,
             'gc_divisor'     => 100,
             'psr7'           => $this->psr7,
-		]);
-	}
+        ]);
+    }
 
-	/**
-	 * Set a data channel.
-	 * 
-	 * This will create databases for the channel.
-	 * 
-	 * @param string $channel Specify a channel.
+    /**
+     * Set a data channel.
+     *
+     * This will create databases for the channel.
+     *
+     * @param string $channel Specify a channel.
      *
      * @return void
      */
-	public function setChannel(string $channel): void
-	{
-		if (!is_null($this->driver)) {
-			$this->driver->setChannel($channel);
-		} else {
-			Event::AddListener(
-				'set_driver',
-				function ($args) use ($channel) {
-				$args['driver']->setChannel($channel);
-				}
-			);
-		}
-	}
+    public function setChannel(string $channel): void
+    {
+        if (!is_null($this->driver)) {
+            $this->driver->setChannel($channel);
+        } else {
+            Event::AddListener(
+                'set_driver',
+                function ($args) use ($channel) {
+                    $args['driver']->setChannel($channel);
+                }
+            );
+        }
+    }
 
-	/**
-	 * Shieldon creating data tables automatically.
-	 * Turning it off when the data tables exist overwise checling
-	 * every pageview.
+    /**
+     * Shieldon creating data tables automatically.
+     * Turning it off when the data tables exist overwise checling
+     * every pageview.
      *
      * @return void
-	 */
-	public function disableDbBuilder(): void
-	{
-		$this->isCreateDatabase = false;
+     */
+    public function disableDbBuilder(): void
+    {
+        $this->isCreateDatabase = false;
 
-		if (PHP_SAPI === 'cli') {
-			// Unit testing needs.
-			$this->isCreateDatabase = true;
-		}
-	}
+        if (php_sapi_name() === 'cli') {
+            // Unit testing needs.
+            $this->isCreateDatabase = true;
+        }
+    }
 
-	/**
-	 * Check the data driver, throw an exception if not set.
+    /**
+     * Check the data driver, throw an exception if not set.
      *
      * @return void
-	 */
-	protected function assertDriver(): void
-	{
-		if (!isset($this->driver)) {
-			throw new RuntimeException(
-				'Data driver must be set.'
-			);
-		}
-	}
+     */
+    protected function assertDriver(): void
+    {
+        if (!isset($this->driver)) {
+            throw new RuntimeException(
+                'Data driver must be set.'
+            );
+        }
+    }
 }

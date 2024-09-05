@@ -20,12 +20,11 @@
 
 declare(strict_types=1);
 
-namespace WPShieldon\Firewall\Component;
+namespace Shieldon\Firewall\Component;
 
-use WPShieldon\Firewall\Component\ComponentProvider;
-use WPShieldon\Firewall\Component\DeniedTrait;
-use WPShieldon\Firewall\IpTrait;
-use WPShieldon\Firewall\Kernel\Enum;
+use Shieldon\Firewall\Component\ComponentProvider;
+use Shieldon\Firewall\Component\DeniedTrait;
+use Shieldon\Firewall\IpTrait;
 
 use function gethostbyname;
 use function implode;
@@ -45,7 +44,7 @@ class Rdns extends ComponentProvider
      *   getRdns              | Get IP resolved hostname.
      *  ----------------------|---------------------------------------------
      */
-	use IpTrait;
+    use IpTrait;
 
     /**
      *   Public methods       | Desctiotion
@@ -62,71 +61,67 @@ class Rdns extends ComponentProvider
      *   isDenied             | Check if an item is denied?
      *  ----------------------|---------------------------------------------
      */
-	use DeniedTrait;
+    use DeniedTrait;
 
     /**
      * Constant
-     */	
-	public const STATUS_CODE = Enum::REASON_COMPONENT_RDNS_DENIED;
+     */
+    const STATUS_CODE = 82;
 
     /**
      * Constructor.
      */
     public function __construct()
     {
-		// RDNS for robot's IP address.
-		$this->deniedList = [
-			'unknown_1' => '.webcrawler.link',
-		];
-	}
+        // RDNS for robot's IP address.
+        $this->deniedList = [
+            'unknown_1' => '.webcrawler.link',
+        ];
+    }
 
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * @return bool
-	 */
-	public function isDenied(): bool 
-	{
-		if (!empty($this->deniedList)) {
-			if (preg_match('/(' . implode('|', $this->deniedList). ')/i', $this->rdns)) {
-				error_log( 'Shieldon - Rdns - isDenied - true' );
-				return true;
-			}
-		}
+    /**
+     * {@inheritDoc}
+     *
+     * @return bool
+     */
+    public function isDenied(): bool
+    {
+        if (!empty($this->deniedList)) {
+            if (preg_match('/(' . implode('|', $this->deniedList). ')/i', $this->rdns)) {
+                return true;
+            }
+        }
 
-		if ($this->strictMode) {
-			// If strict mode is on, this value can not be empty.
-			if (empty($this->rdns)) {
-				error_log( 'Shieldon - Rdns - isDenied - true' );
-				return true;
-			}
+        if ($this->strictMode) {
+            // If strict mode is on, this value can not be empty.
+            if (empty($this->rdns)) {
+                return true;
+            }
 
-			// If the RDNS is an IP adress, not a FQDN.
-			if ($this->ip === $this->rdns) {
-				error_log( 'Shieldon - Rdns - isDenied - true' );
-				return true;
-			}
+            // If the RDNS is an IP adress, not a FQDN.
+            if ($this->ip === $this->rdns) {
+                return true;
+            }
 
-			// confirm hostname's IP again
-			$ip = gethostbyname($this->rdns);
+            // confirm hostname's IP again
+            $ip = gethostbyname($this->rdns);
 
-			// If the IP is different as hostname's resolved IP.
-			if ($ip !== $this->ip) {
-				error_log( 'Shieldon - Rdns - isDenied - true' );
-				return true;
-			}
-		}
+            // If the IP is different as hostname's resolved IP.
+            if ($ip !== $this->ip) {
+                return true;
+            }
+        }
 
-		return false;
-	}
+        return false;
+    }
 
-	/**
-	 * Unique deny status code.
-	 * 
-	 * @return string
-	 */
-	public function getDenyStatusCode(): string
-	{
-		return self::STATUS_CODE;
-	}
+    /**
+     * Unique deny status code.
+     *
+     * @return int
+     */
+    public function getDenyStatusCode(): int
+    {
+        return self::STATUS_CODE;
+    }
 }

@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace WPShieldon\Firewall\Component;
+namespace Shieldon\Firewall\Component;
 
 /**
  * ComponentPrivider
@@ -32,7 +32,7 @@ abstract class ComponentProvider
      *
      * @var bool
      */
-	protected bool $strictMode = false;
+    protected $strictMode = false;
 
     /**
      * Enable strict mode.
@@ -41,15 +41,15 @@ abstract class ComponentProvider
      *
      * @return void
      */
-	public function setStrict(bool $strictMode): void
-	{
-		$this->strictMode = $strictMode;
-	}
+    public function setStrict(bool $bool): void
+    {
+        $this->strictMode = $bool;
+    }
 
     /**
      * Unique deny status code.
      *
-     * @return string
+     * @return int
      */
-	abstract public function getDenyStatusCode(): string;
+    abstract public function getDenyStatusCode(): int;
 }

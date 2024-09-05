@@ -20,18 +20,17 @@
 
 declare(strict_types=1);
 
-namespace WPShieldon\Firewall\Captcha;
+namespace Shieldon\Firewall\Captcha;
 
 use RuntimeException;
 use GdImage; // PHP 8
-use WPShieldon\Firewall\Captcha\CaptchaProvider;
+use Shieldon\Firewall\Captcha\CaptchaProvider;
 
-use function WPShieldon\Firewall\get_request;
-use function WPShieldon\Firewall\get_session_instance;
-use function WPShieldon\Firewall\unset_superglobal;
+use function Shieldon\Firewall\get_request;
+use function Shieldon\Firewall\get_session_instance;
+use function Shieldon\Firewall\unset_superglobal;
 use function base64_encode;
 use function cos;
-use function extension_loaded;
 use function function_exists;
 use function imagecolorallocate;
 use function imagecreate;
@@ -43,8 +42,6 @@ use function imageline;
 use function imagepng;
 use function imagerectangle;
 use function imagestring;
-use function is_array;
-use function is_resource;
 use function mt_rand;
 use function ob_end_clean;
 use function ob_get_contents;
@@ -59,12 +56,12 @@ use function strlen;
  */
 class ImageCaptcha extends CaptchaProvider
 {
-	/**
+    /**
      * Settings.
      *
      * @var array
      */
-	protected array  $properties = [];
+    protected $properties = [];
 
 
     /**
@@ -72,14 +69,14 @@ class ImageCaptcha extends CaptchaProvider
      *
      * @var string
      */
-	protected string $imageType = '';
+    protected $imageType = '';
 
     /**
      * Word.
      *
      * @var string
-     */	
-	protected string $word = '';
+     */
+    protected $word = '';
 
     /**
      * Image resource.
@@ -87,16 +84,16 @@ class ImageCaptcha extends CaptchaProvider
      *
      * @var resource|null|bool
      */
-	private $im;
+    private $im;
 
     /**
      * The length of the word.
      *
      * @var int
      */
-	protected int $length = 4;
+    protected $length = 4;
 
-	/**
+    /**
      * Constructor.
      *
      * It will implement default configuration settings here.
@@ -105,10 +102,9 @@ class ImageCaptcha extends CaptchaProvider
      *
      * @return void
      */
-	public function __construct(array $config = [])
-	{
-		parent::__construct();
-		$defaults = [
+    public function __construct(array $config = [])
+    {
+        $defaults = [
             'img_width'    => 250,
             'img_height'   => 50,
             'word_length'  => 8,
@@ -119,85 +115,87 @@ class ImageCaptcha extends CaptchaProvider
                 'border'     => [153, 200, 255],
                 'text'       => [51,  153, 255],
                 'grid'       => [153, 200, 255],
-			],
-		];
+            ],
+        ];
 
-		foreach ($defaults as $k => $v) {
-			if (isset($config[$k])) {
-				$this->properties[$k] = $config[$k];
-			} else {
-				$this->properties[$k] = $defaults[$k];
-			}
-		}
+        foreach ($defaults as $k => $v) {
+            if (isset($config[$k])) {
+                $this->properties[$k] = $config[$k];
+            } else {
+                $this->properties[$k] = $defaults[$k];
+            }
+        }
 
-		if (!is_array($this->properties['colors'])) {
-			$this->properties['colors'] = $defaults['colors'];
-		}
+        if (!is_array($this->properties['colors'])) {
+            $this->properties['colors'] = $defaults['colors'];
+        }
 
-		foreach ($defaults['colors'] as $k => $v) {
-			if (!is_array($this->properties['colors'][$k])) {
-				$this->properties['colors'][$k] = $defaults['colors'][$k];
-			}
-		}
-	}
-	
+        foreach ($defaults['colors'] as $k => $v) {
+            if (!is_array($this->properties['colors'][$k])) {
+                $this->properties['colors'][$k] = $defaults['colors'][$k];
+            }
+        }
+    }
+
     /**
      * Response the result.
      *
      * @return bool
      */
-	public function response(): bool
-	{
-		$postParams = get_request()->getParsedBody();
-		$sessionCaptchaHash = get_session_instance()->get('shieldon_image_captcha_hash');
+    public function response(): bool
+    {
+        $postParams = get_request()->getParsedBody();
+        $sessionCaptchaHash = get_session_instance()->get('shieldon_image_captcha_hash');
 
-		if (empty($postParams['shieldon_image_captcha']) || empty($sessionCaptchaHash)) {
-			return false;
-		}
+        if (empty($postParams['shieldon_image_captcha']) || empty($sessionCaptchaHash)) {
+            return false;
+        }
 
-		$flag = false;
+        $flag = false;
 
-		if (password_verify($postParams['shieldon_image_captcha'], $sessionCaptchaHash)) {
-			$flag = true;
-		}
+        if (password_verify($postParams['shieldon_image_captcha'], $sessionCaptchaHash)) {
+            $flag = true;
+        }
 
-		// Prevent detecting POST method on RESTful frameworks.
-		unset_superglobal('shieldon_image_captcha', 'post');
+        // Prevent detecting POST method on RESTful frameworks.
+        unset_superglobal('shieldon_image_captcha', 'post');
 
-		return $flag;
-	}
+        return $flag;
+    }
 
     /**
      * Output a required HTML.
      *
      * @return string
      */
-	public function form(): string
-	{
-		if (!extension_loaded('gd')) {
-			return '';
-		}
+    public function form(): string
+    {
+        // @codeCoverageIgnoreStart
+        if (!extension_loaded('gd')) {
+            return '';
+        }
+        // @codeCoverageIgnoreEnd
 
-		$html = '';
-		$base64image = $this->createCaptcha();
-		$imgWidth = $this->properties['img_width'];
-		$imgHeight = $this->properties['img_height'];
+        $html = '';
+        $base64image = $this->createCaptcha();
+        $imgWidth = $this->properties['img_width'];
+        $imgHeight = $this->properties['img_height'];
 
-		if (!empty($base64image)) {
-			$html = '<div style="padding: 0px; overflow: hidden; margin: 10px 0;">';
-			$html .= '<div style="
+        if (!empty($base64image)) {
+            $html = '<div style="padding: 0px; overflow: hidden; margin: 10px 0;">';
+            $html .= '<div style="
                 border: 1px #dddddd solid;
                 overflow: hidden;
                 border-radius: 3px;
                 display: inline-block;
                 padding: 5px;
                 box-shadow: 0px 0px 4px 1px rgba(0,0,0,0.08);">';
-			$html .= '<div style="margin-bottom: 2px;"><img src="data:image/' .
-				$this->imageType . ';base64,' .
-				$base64image . '" style="width: ' .
-				$imgWidth . '; height: ' .
-				$imgHeight . ';"></div>';
-			$html .= '<div><input type="text" name="shieldon_image_captcha" style="
+            $html .= '<div style="margin-bottom: 2px;"><img src="data:image/' .
+                $this->imageType . ';base64,' .
+                $base64image . '" style="width: ' .
+                $imgWidth . '; height: ' .
+                $imgHeight . ';"></div>';
+            $html .= '<div><input type="text" name="shieldon_image_captcha" style="
                 width: 100px;
                 border: 1px solid rgba(27,31,35,.2);
                 border-radius: 3px;
@@ -208,41 +206,41 @@ class ImageCaptcha extends CaptchaProvider
                 box-shadow: inset 0 1px 2px rgba(27,31,35,.075);
                 vertical-align: middle;
                 padding: 6px 12px;;"></div>';
-			$html .= '</div>';
-			$html .= '</div>';
-		}
+            $html .= '</div>';
+            $html .= '</div>';
+        }
 
-		return $html;
-	}
+        return $html;
+    }
 
     /**
      * Create CAPTCHA
      *
      * @return string
      */
-	protected function createCaptcha(): string
-	{
-		$imgWidth = $this->properties['img_width'];
-		$imgHeight = $this->properties['img_height'];
+    protected function createCaptcha()
+    {
+        $imgWidth = $this->properties['img_width'];
+        $imgHeight = $this->properties['img_height'];
 
-		$this->createCanvas($imgWidth, $imgHeight);
+        $this->createCanvas($imgWidth, $imgHeight);
 
-		$im = $this->getImageResource();
+        $im = $this->getImageResource();
 
-		// Assign colors.
-		$colors = [];
+        // Assign colors.
+        $colors = [];
 
-		foreach ($this->properties['colors'] as $k => $v) {
+        foreach ($this->properties['colors'] as $k => $v) {
 
-			/**
-			 * Create color identifier for each color.
-			 * 
-			 * @var int
-			 */
-			$colors[$k] = imagecolorallocate($im, $v[0], $v[1], $v[2]);
-		}
+            /**
+             * Create color identifier for each color.
+             *
+             * @var int
+             */
+            $colors[$k] = imagecolorallocate($im, $v[0], $v[1], $v[2]);
+        }
 
-		$this->createRandomWords();
+        $this->createRandomWords();
 
         $this->createBackground(
             $imgWidth,
@@ -267,34 +265,34 @@ class ImageCaptcha extends CaptchaProvider
             $imgHeight,
             $colors['border']
         );
-		
-        // Save hash to the user sesssion.
-		$hash = password_hash($this->word, PASSWORD_BCRYPT);
 
-		get_session_instance()->set('shieldon_image_captcha_hash', $hash);
-		get_session_instance()->save();
-		
-		return $this->getImageBase64Content();
-	}
+        // Save hash to the user sesssion.
+        $hash = password_hash($this->word, PASSWORD_BCRYPT);
+
+        get_session_instance()->set('shieldon_image_captcha_hash', $hash);
+        get_session_instance()->save();
+
+        return $this->getImageBase64Content();
+    }
 
     /**
      * Prepare the random words that want to display to front.
      *
      * @return void
      */
-	private function createRandomWords()
-	{
-		$this->word = '';
+    private function createRandomWords()
+    {
+        $this->word = '';
 
-		$poolLength = strlen($this->properties['pool']);
-		$randMax = $poolLength - 1;
+        $poolLength = strlen($this->properties['pool']);
+        $randMax = $poolLength - 1;
 
-		for ($i = 0; $i < $this->properties['word_length']; $i++) {
-			$this->word .= $this->properties['pool'][random_int(0, $randMax)];
-		}
+        for ($i = 0; $i < $this->properties['word_length']; $i++) {
+            $this->word .= $this->properties['pool'][random_int(0, $randMax)];
+        }
 
-		$this->length = strlen($this->word);
-	}
+        $this->length = strlen($this->word);
+    }
 
     /**
      * Create a canvas.
@@ -306,16 +304,18 @@ class ImageCaptcha extends CaptchaProvider
      *
      * @return void
      */
-	private function createCanvas(int $imgWidth, int $imgHeight)
-	{
-		if (function_exists('imagecreatetruecolor')) {
-			$this->im = imagecreatetruecolor($imgWidth, $imgHeight);
+    private function createCanvas(int $imgWidth, int $imgHeight)
+    {
+        if (function_exists('imagecreatetruecolor')) {
+            $this->im = imagecreatetruecolor($imgWidth, $imgHeight);
+    
+            // @codeCoverageIgnoreStart
+        } else {
+            $this->im = imagecreate($imgWidth, $imgHeight);
+        }
 
-		} else {
-			$this->im = imagecreate($imgWidth, $imgHeight);
-		}
-
-	}
+        // @codeCoverageIgnoreEnd
+    }
 
     /**
      * Create the background.
@@ -326,12 +326,12 @@ class ImageCaptcha extends CaptchaProvider
      *
      * @return void
      */
-	private function createBackground(int $imgWidth, int $imgHeight, int $bgColor)
-	{
-		$im = $this->getImageResource();
+    private function createBackground(int $imgWidth, int $imgHeight, $bgColor)
+    {
+        $im = $this->getImageResource();
 
-		imagefilledrectangle($im, 0, 0, $imgWidth, $imgHeight, $bgColor);
-	}
+        imagefilledrectangle($im, 0, 0, $imgWidth, $imgHeight, $bgColor);
+    }
 
     /**
      * Create a spiral patten.
@@ -342,39 +342,39 @@ class ImageCaptcha extends CaptchaProvider
      *
      * @return void
      */
-	private function createSpiralPattern(int $imgWidth, int $imgHeight, int $gridColor)
-	{
-		$im = $this->getImageResource();
+    private function createSpiralPattern(int $imgWidth, int $imgHeight, $gridColor)
+    {
+        $im = $this->getImageResource();
 
-		// Determine angle and position.
-		$angle = ($this->length >= 6) ? mt_rand(-($this->length - 6), ($this->length - 6)) : 0;
-		$xAxis = mt_rand(6, (360 / $this->length) - 16);
-		$yAxis = ($angle >= 0) ? mt_rand($imgHeight, $imgWidth) : mt_rand(6, $imgHeight);
+        // Determine angle and position.
+        $angle = ($this->length >= 6) ? mt_rand(-($this->length - 6), ($this->length - 6)) : 0;
+        $xAxis = mt_rand(6, (360 / $this->length) - 16);
+        $yAxis = ($angle >= 0) ? mt_rand($imgHeight, $imgWidth) : mt_rand(6, $imgHeight);
 
         // Create the spiral pattern.
-		$theta   = 1;
-		$thetac  = 7;
-		$radius  = 16;
-		$circles = 20;
-		$points  = 32;
+        $theta   = 1;
+        $thetac  = 7;
+        $radius  = 16;
+        $circles = 20;
+        $points  = 32;
 
-		for ($i = 0, $cp = ($circles * $points) - 1; $i < $cp; $i++) {
-			$theta += $thetac;
-			$rad = $radius * ($i / $points);
+        for ($i = 0, $cp = ($circles * $points) - 1; $i < $cp; $i++) {
+            $theta += $thetac;
+            $rad = $radius * ($i / $points);
 
-			$x = (int) (($rad * cos($theta)) + $xAxis);
-			$y = (int) (($rad * sin($theta)) + $yAxis);
+            $x = (int) (($rad * cos($theta)) + $xAxis);
+            $y = (int) (($rad * sin($theta)) + $yAxis);
 
-			$theta += $thetac;
-			$rad1 = $radius * (($i + 1) / $points);
+            $theta += $thetac;
+            $rad1 = $radius * (($i + 1) / $points);
 
-			$x1 = (int) (($rad1 * cos($theta)) + $xAxis);
-			$y1 = (int) (($rad1 * sin($theta)) + $yAxis);
+            $x1 = (int) (($rad1 * cos($theta)) + $xAxis);
+            $y1 = (int) (($rad1 * sin($theta)) + $yAxis);
 
-			imageline($im, $x, $y, $x1, $y1, $gridColor);
-			$theta -= $thetac;
-		}
-	}
+            imageline($im, $x, $y, $x1, $y1, $gridColor);
+            $theta -= $thetac;
+        }
+    }
 
     /**
      * Write the text into the image canvas.
@@ -385,20 +385,20 @@ class ImageCaptcha extends CaptchaProvider
      *
      * @return void
      */
-	private function writeText(int $imgWidth, int $imgHeight, int $textColor)
-	{
-		$im = $this->getImageResource();
+    private function writeText(int $imgWidth, int $imgHeight, $textColor)
+    {
+        $im = $this->getImageResource();
 
-		$z = (int) ($imgWidth / ($this->length / 3));
-		$x = mt_rand(0, $z);
-		// $y = 0;
+        $z = (int) ($imgWidth / ($this->length / 3));
+        $x = mt_rand(0, $z);
+        // $y = 0;
 
-		for ($i = 0; $i < $this->length; $i++) {
-			$y = mt_rand(0, $imgHeight / 2);
-			imagestring($im, 5, $x, $y, $this->word[$i], $textColor);
-			$x += ($this->properties['font_spacing'] * 2);
-		}
-	}
+        for ($i = 0; $i < $this->length; $i++) {
+            $y = mt_rand(0, $imgHeight / 2);
+            imagestring($im, 5, $x, $y, $this->word[$i], $textColor);
+            $x += ($this->properties['font_spacing'] * 2);
+        }
+    }
 
     /**
      * Write the text into the image canvas.
@@ -409,66 +409,72 @@ class ImageCaptcha extends CaptchaProvider
      *
      * @return void
      */
-	private function createBorder(int $imgWidth, int $imgHeight, int $borderColor): void
-	{
-		$im = $this->getImageResource();
+    private function createBorder(int $imgWidth, int $imgHeight, $borderColor): void
+    {
+        $im = $this->getImageResource();
 
         // Create the border.
-		imagerectangle($im, 0, 0, $imgWidth - 1, $imgHeight - 1, $borderColor);
-	}
+        imagerectangle($im, 0, 0, $imgWidth - 1, $imgHeight - 1, $borderColor);
+    }
 
     /**
      * Get the base64 string of the image.
      *
      * @return string
      */
-	private function getImageBase64Content(): string
-	{
-		$im = $this->getImageResource();
+    private function getImageBase64Content(): string
+    {
+        $im = $this->getImageResource();
 
-		// Generate image in base64 string.
-		ob_start();
+        // Generate image in base64 string.
+        ob_start();
 
-		if (function_exists('imagejpeg')) {
-			$this->imageType = 'jpeg';
-			imagejpeg($im);
+        if (function_exists('imagejpeg')) {
+            $this->imageType = 'jpeg';
+            imagejpeg($im);
 
-		}
-		elseif (function_exists('imagepng')) {
-			$this->imageType = 'png';
-			imagepng($im);
-		}
-		else {
-			echo '';
-		}
+            // @codeCoverageIgnoreStart
+        } elseif (function_exists('imagepng')) {
+            $this->imageType = 'png';
+            imagepng($im);
+        } else {
+            echo '';
+        }
 
+        // @codeCoverageIgnoreEnd
 
-		$imageContent = ob_get_contents();
-		ob_end_clean();
-		imagedestroy($im);
+        $imageContent = ob_get_contents();
+        ob_end_clean();
+        imagedestroy($im);
 
-		return base64_encode($imageContent);
-	}
+        return base64_encode($imageContent);
+    }
 
-	/**
+    /**
      * Get image resource.
      *
      * @return resource|GdImage
      */
-	private function getImageResource(): resource|GdImage
-	{
-		if (PHP_VERSION_ID >= 80000) {
-			if (!$this->im instanceof GdImage) {
-				throw new RuntimeException(
-					'Cannot create image resource.'
-				);
-			}
-		} elseif (!is_resource($this->im)) {
-			throw new RuntimeException(
-				'Cannot create image resource.'
-			);
-		}
+    private function getImageResource()
+    {
+        if (version_compare(phpversion(), '8.0.0', '>=')) {
+            if (!$this->im instanceof GdImage) {
+                // @codeCoverageIgnoreStart
+                throw new RuntimeException(
+                    'Cannot create image resource.'
+                );
+                // @codeCoverageIgnoreEnd
+            }
+        } else {
+            if (!is_resource($this->im)) {
+                // @codeCoverageIgnoreStart
+                throw new RuntimeException(
+                    'Cannot create image resource.'
+                );
+                // @codeCoverageIgnoreEnd
+            }
+        }
 
-		return $this->im;
-	}
+        return $this->im;
+    }
 }

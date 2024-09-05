@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace WPShieldon\Firewall\Firewall\Messenger;
+namespace Shieldon\Firewall\Firewall\Messenger;
 
 use Shieldon\Messenger\Messenger\MessengerInterface;
 use Shieldon\Messenger\LineNotify;
@@ -30,17 +30,17 @@ use Shieldon\Messenger\LineNotify;
  */
 class ItemLineNotify
 {
-	/**
-	 * Initialize and get the instance.
-	 * 
-	 * @param array $setting The configuration of that messanger.
+    /**
+     * Initialize and get the instance.
+     *
+     * @param array $setting The configuration of that messanger.
      *
      * @return MessengerInterface
-	 */
-	public static function get(array $setting): MessengerInterface
-	{
-		$accessToken = $setting['config']['access_token'] ?? '';
-		
-		return new LineNotify($accessToken);
-	}
+     */
+    public static function get(array $setting): MessengerInterface
+    {
+        $accessToken = $setting['config']['access_token'] ?? '';
+
+        return new LineNotify($accessToken);
+    }
 }

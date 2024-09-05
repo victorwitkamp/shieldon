@@ -20,38 +20,33 @@
 
 declare(strict_types=1);
 
-namespace WPShieldon\Firewall;
+namespace Shieldon\Firewall;
 
-use Monolog\Handler\StreamHandler;
-use Monolog\Level;
-use Monolog\Logger;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use WPShieldon\Firewall\Captcha\Foundation;
-use WPShieldon\Firewall\Helpers;
-use WPShieldon\Firewall\HttpFactory;
-use WPShieldon\Firewall\IpTrait;
-use WPShieldon\Firewall\Kernel\CaptchaTrait;
-use WPShieldon\Firewall\Kernel\ComponentTrait;
-use WPShieldon\Firewall\Kernel\DriverTrait;
-use WPShieldon\Firewall\Kernel\FilterTrait;
-use WPShieldon\Firewall\Kernel\MessengerTrait;
-use WPShieldon\Firewall\Kernel\RuleTrait;
-use WPShieldon\Firewall\Kernel\SessionTrait;
-use WPShieldon\Firewall\Kernel\TemplateTrait;
-use WPShieldon\Firewall\Kernel\Enum;
-use WPShieldon\Firewall\Log\CustomActionLogger;
-use WPShieldon\Firewall\Container;
+use Shieldon\Firewall\Captcha\Foundation;
+use Shieldon\Firewall\Helpers;
+use Shieldon\Firewall\HttpFactory;
+use Shieldon\Firewall\IpTrait;
+use Shieldon\Firewall\Kernel\CaptchaTrait;
+use Shieldon\Firewall\Kernel\ComponentTrait;
+use Shieldon\Firewall\Kernel\DriverTrait;
+use Shieldon\Firewall\Kernel\FilterTrait;
+use Shieldon\Firewall\Kernel\MessengerTrait;
+use Shieldon\Firewall\Kernel\RuleTrait;
+use Shieldon\Firewall\Kernel\SessionTrait;
+use Shieldon\Firewall\Kernel\TemplateTrait;
+use Shieldon\Firewall\Kernel\Enum;
+use Shieldon\Firewall\Log\ActionLogger;
+use Shieldon\Firewall\Container;
 use Shieldon\Event\Event;
 use Closure;
-use function WPShieldon\Firewall\get_default_properties;
-use function WPShieldon\Firewall\get_request;
-use function WPShieldon\Firewall\get_session_instance;
+use function Shieldon\Firewall\get_default_properties;
+use function Shieldon\Firewall\get_request;
+use function Shieldon\Firewall\get_session_instance;
 use function array_push;
 use function get_class;
 use function gethostbyaddr;
-use function in_array;
-use function is_null;
 use function ltrim;
 use function strpos;
 use function strrpos;
@@ -63,7 +58,7 @@ use function time;
  */
 class Kernel
 {
-	    /**
+    /**
      *   Public methods       | Desctiotion
      *  ----------------------|---------------------------------------------
      *   ban                  | Ban an IP.
@@ -89,7 +84,7 @@ class Kernel
      *   disableCaptcha       | Mostly be used in unit testing purpose.
      *  ----------------------|---------------------------------------------
      */
-	use CaptchaTrait;
+    use CaptchaTrait;
 
     /**
      *   Public methods       | Desctiotion
@@ -99,7 +94,7 @@ class Kernel
      *   disableComponents    | Disable all components.
      *  ----------------------|---------------------------------------------
      */
-	use ComponentTrait;
+    use ComponentTrait;
 
     /**
      *   Public methods       | Desctiotion
@@ -109,7 +104,7 @@ class Kernel
      *   disableDbBuilder     | disable creating data tables.
      *  ----------------------|---------------------------------------------
      */
-	use DriverTrait;
+    use DriverTrait;
 
     /**
      *   Public methods       | Desctiotion
@@ -119,7 +114,7 @@ class Kernel
      *   disableFilters       | Disable all filters.
      *  ----------------------|---------------------------------------------
      */
-	use FilterTrait;
+    use FilterTrait;
 
     /**
      *   Public methods       | Desctiotion
@@ -130,7 +125,7 @@ class Kernel
      *   getRdns              | Get IP resolved hostname.
      *  ----------------------|---------------------------------------------
      */
-	use IpTrait;
+    use IpTrait;
 
     /**
      *   Public methods       | Desctiotion
@@ -138,7 +133,7 @@ class Kernel
      *   setMessenger         | Set a messenger
      *  ----------------------|---------------------------------------------
      */
-	use MessengerTrait;
+    use MessengerTrait;
 
     /**
      *   Public methods       | Desctiotion
@@ -146,7 +141,7 @@ class Kernel
      *                        | No public methods.
      *  ----------------------|---------------------------------------------
      */
-	use RuleTrait;
+    use RuleTrait;
 
     /**
      *   Public methods       | Desctiotion
@@ -155,7 +150,7 @@ class Kernel
      *   getSessionCount      | Get the amount of the sessions.
      *  ----------------------|---------------------------------------------
      */
-	use SessionTrait;
+    use SessionTrait;
 
     /**
      *   Public methods       | Desctiotion
@@ -166,49 +161,46 @@ class Kernel
      *   getJavascript        | Print a JavaScript snippet in the pages.
      *  ----------------------|---------------------------------------------
      */
-	use TemplateTrait;
+    use TemplateTrait;
 
-	public Logger $psrlogger;
+    /**
+     * The result passed from filters, compoents, etc.
+     *
+     * DENY    : 0
+     * ALLOW   : 1
+     * CAPTCHA : 2
+     *
+     * @var int
+     */
+    protected $result = 1;
 
-	/**
-	 * The result passed from filters, components, etc.
-	 * 
-	 * RESPONSE_ALLOW
-	 * RESPONSE_DENY
-	 * RESPONSE_TEMPORARILY_DENY
-	 * RESPONSE_LIMIT_SESSION
-	 * 
-	 * @var string
-	 */
-	protected string $result = Enum::RESPONSE_ALLOW;
-
-	/**
-	 * Default settings
+    /**
+     * Default settings
      *
      * @var array
-	 */
-	protected array $properties = [];
+     */
+    protected $properties = [];
 
-	/**
+    /**
      * Logger instance.
      *
-     * @var CustomActionLogger
+     * @var ActionLogger
      */
-	public CustomActionLogger $logger;
+    public $logger;
 
     /**
      * The closure functions that will be executed in this->run()
      *
      * @var array
      */
-	protected array $closures = [];
+    protected $closures = [];
 
     /**
      * URLs that are excluded from Shieldon's protection.
      *
      * @var array
      */
-	protected array $excludedUrls = [];
+    protected $excludedUrls = [];
 
     /**
      * Strict mode.
@@ -217,7 +209,7 @@ class Kernel
      *
      * @var bool|null
      */
-	protected ?bool $strictMode;
+    protected $strictMode;
 
     /**
      * Which type of configuration source that Shieldon firewall managed?
@@ -225,14 +217,14 @@ class Kernel
      *
      * @var string
      */
-	protected string $firewallType = 'self';
+    protected $firewallType = 'self';
 
     /**
      * The reason code of a user to be allowed or denied.
      *
      * @var int|null
      */
-	protected $reason;
+    protected $reason;
 
     /**
      * The session cookie will be created by the PSR-7 HTTP resolver.
@@ -240,9 +232,9 @@ class Kernel
      *
      * @var bool
      */
-	public bool $psr7 = true;
+    public $psr7 = true;
 
-	/**
+    /**
      * Shieldon constructor.
      *
      * @param ServerRequestInterface|null $request  A PSR-7 server request.
@@ -250,156 +242,153 @@ class Kernel
      *
      * @return void
      */
-	public function __construct(?ServerRequestInterface $request = null, ?ResponseInterface $response = null)
-	{
-		$this->psrlogger = new Logger( 'KernelLogger' );
-		$this->psrlogger->pushHandler( new StreamHandler( SHIELDON_PLUGIN_DIR . '/logs/Shieldon_Kernel.log', Level::Warning ) );
-		$this->psrlogger->warning( 'Construct - ' . $_SERVER['REQUEST_URI'] );
-		// Load helper functions. This is the must and first.
-		new Helpers();
+    public function __construct(?ServerRequestInterface $request = null, ?ResponseInterface $response = null)
+    {
+        // Load helper functions. This is the must and first.
+        new Helpers();
 
-		if (is_null($request)) {
+        if (is_null($request)) {
             $request = HttpFactory::createRequest();
-			$this->psr7 = false;
-		}
+            $this->psr7 = false;
+        }
 
-		if (is_null($response)) {
+        if (is_null($response)) {
             $response = HttpFactory::createResponse();
-		}
-		
-		// Load default settings.
-		$this->properties = get_default_properties();
+        }
 
-		// Basic form for Captcha.
+        // Load default settings.
+        $this->properties = get_default_properties();
+
+        // Basic form for Captcha.
         $this->setCaptcha(new Foundation());
-		
+
         Container::set('request', $request);
         Container::set('response', $response);
         Container::set('shieldon', $this);
-		
-		Event::AddListener(
-			'set_session_driver',
-			function ($args) {
-				$session = get_session_instance();
-				$session->init(
-					$args['driver'],
-					$args['gc_expires'],
-					$args['gc_probability'],
-					$args['gc_divisor'],
-					$args['psr7']
-				);
+
+        Event::AddListener(
+            'set_session_driver',
+            function ($args) {
+                $session = get_session_instance();
+                $session->init(
+                    $args['driver'],
+                    $args['gc_expires'],
+                    $args['gc_probability'],
+                    $args['gc_divisor'],
+                    $args['psr7']
+                );
 
                 /**
                  * Hook - session_init
                  */
-				Event::doDispatch('session_init');
-				set_session_instance($session);
-			}
-		);
-	}
+                Event::doDispatch('session_init');
+                set_session_instance($session);
+            }
+        );
+    }
 
-	/**
+    /**
      * Run, run, run!
      *
-	 * Check the rule tables first, if an IP address has been listed.
-	 * Call function filter() if an IP address is not listed in rule tables.
-	 * 
-	 * @return string
-	 */
-	public function run(): string
-	{
-		$this->assertDriver();
+     * Check the rule tables first, if an IP address has been listed.
+     * Call function filter() if an IP address is not listed in rule tables.
+     *
+     * @return int
+     */
+    public function run(): int
+    {
+        $this->assertDriver();
 
         // Ignore the excluded urls.
-		foreach ($this->excludedUrls as $url) {
-			if (str_starts_with($this->getCurrentUrl(), $url)) {
-				return $this->result = Enum::RESPONSE_ALLOW;
-			}
-		}
+        foreach ($this->excludedUrls as $url) {
+            if (strpos($this->getCurrentUrl(), $url) === 0) {
+                return $this->result = Enum::RESPONSE_ALLOW;
+            }
+        }
 
         // Execute closure functions.
-		foreach ($this->closures as $closure) {
-			$closure();
-		}
+        foreach ($this->closures as $closure) {
+            $closure();
+        }
 
-		$result = $this->process();
+        $result = $this->process();
 
-		if ($result !== Enum::RESPONSE_ALLOW) {
+        if ($result !== Enum::RESPONSE_ALLOW) {
             // Current session did not pass the CAPTCHA, it is still stuck in
             // CAPTCHA page.
-			$actionCode = Enum::LOG_CAPTCHA;
+            $actionCode = Enum::LOG_CAPTCHA;
 
             // If current session's respone code is RESPONSE_DENY, record it as
             // `blacklist_count` in our logs.
             // It is stuck in warning page, not CAPTCHA.
-			if ($result === Enum::RESPONSE_DENY) {
-				$actionCode = Enum::LOG_BLACKLIST;
-			}
+            if ($result === Enum::RESPONSE_DENY) {
+                $actionCode = Enum::LOG_BLACKLIST;
+            }
 
-			if ($result === Enum::RESPONSE_LIMIT_SESSION) {
-				$actionCode = Enum::LOG_LIMIT;
-			}
-		} else {
-			$actionCode = Enum::LOG_PAGEVIEW;
-		}
+            if ($result === Enum::RESPONSE_LIMIT_SESSION) {
+                $actionCode = Enum::LOG_LIMIT;
+            }
 
-		$this->log($actionCode);
+            $this->log($actionCode);
+        } else {
+            $this->log(Enum::LOG_PAGEVIEW);
+        }
 
-		// @ MessengerTrait
-		$this->triggerMessengers();
+        // @ MessengerTrait
+        $this->triggerMessengers();
 
         /**
          * Hook - kernel_end
          */
-		Event::doDispatch('kernel_end');
+        Event::doDispatch('kernel_end');
 
-		return $result;
-	}
+        return $result;
+    }
 
-	/**
+    /**
      * Ban an IP.
      *
      * @param string $ip A valid IP address.
-	 * 
+     *
      * @return void
      */
-	public function ban(string $ip = ''): void
-	{
+    public function ban(string $ip = ''): void
+    {
         if ('' === $ip) {
-			$ip = $this->ip;
-		}
-		
-		$this->action(
-			Enum::ACTION_DENY,
-			Enum::REASON_MANUAL_BAN_DENIED,
-			$ip
-		);
-	}
+            $ip = $this->ip;
+        }
+ 
+        $this->action(
+            Enum::ACTION_DENY,
+            Enum::REASON_MANUAL_BAN_DENIED,
+            $ip
+        );
+    }
 
-	/**
+    /**
      * Unban an IP.
      *
      * @param string $ip A valid IP address.
-	 * 
+     *
      * @return void
      */
-	public function unban(string $ip = ''): void
-	{
-		if ($ip === '') {
-			$ip = $this->ip;
-		}
+    public function unban(string $ip = ''): void
+    {
+        if ($ip === '') {
+            $ip = $this->ip;
+        }
 
-		$this->action(
-			Enum::ACTION_UNBAN,
-			Enum::REASON_MANUAL_BAN_DENIED,
-			$ip
-		);
-		$this->log(Enum::ACTION_UNBAN);
+        $this->action(
+            Enum::ACTION_UNBAN,
+            Enum::REASON_MANUAL_BAN_DENIED,
+            $ip
+        );
+        $this->log(Enum::ACTION_UNBAN);
 
-		$this->result = Enum::RESPONSE_ALLOW;
-	}
+        $this->result = Enum::RESPONSE_ALLOW;
+    }
 
-	/**
+    /**
      * Set a property setting.
      *
      * @param string $key   The key of a property setting.
@@ -407,12 +396,12 @@ class Kernel
      *
      * @return void
      */
-	public function setProperty(string $key = '', $value = ''): void
-	{
-		if (isset($this->properties[$key])) {
-			$this->properties[$key] = $value;
-		}
-	}
+    public function setProperty(string $key = '', $value = ''): void
+    {
+        if (isset($this->properties[$key])) {
+            $this->properties[$key] = $value;
+        }
+    }
 
     /**
      * Set the property settings.
@@ -421,14 +410,14 @@ class Kernel
      *
      * @return void
      */
-	public function setProperties(array $settings): void
-	{
+    public function setProperties(array $settings): void
+    {
         foreach (array_keys($this->properties) as $k) {
             if (isset($settings[$k])) {
                 $this->properties[$k] = $settings[$k];
-			}
-		}
-	}
+            }
+        }
+    }
 
     /**
      * Strict mode.
@@ -438,10 +427,10 @@ class Kernel
      *
      * @return void
      */
-	public function setStrict(bool $bool): void
-	{
-		$this->strictMode = $bool;
-	}
+    public function setStrict(bool $bool): void
+    {
+        $this->strictMode = $bool;
+    }
 
     /**
      * Set an action log logger.
@@ -450,10 +439,10 @@ class Kernel
      *
      * @return void
      */
-	public function setLogger(CustomActionLogger $logger): void
-	{
-		$this->logger = $logger;
-	}
+    public function setLogger(ActionLogger $logger): void
+    {
+        $this->logger = $logger;
+    }
 
     /**
      * Add a path into the excluded list.
@@ -461,11 +450,13 @@ class Kernel
      * @param string $uriPath The path component of a URI.
      *
      * @return void
-     */	
-	public function exclude(string $uriPath): void
-	{
-		$this->excludedUrls[] = '/' . ltrim($uriPath, '/');
-	}
+     */
+    public function exclude(string $uriPath): void
+    {
+        $uriPath = '/' . ltrim($uriPath, '/');
+
+        array_push($this->excludedUrls, $uriPath);
+    }
 
     /**
      * Set the URLs you want them excluded them from protection.
@@ -474,10 +465,10 @@ class Kernel
      *
      * @return void
      */
-	public function setExcludedList(array $urls = []): void
-	{
-		$this->excludedUrls = $urls;
-	}
+    public function setExcludedList(array $urls = []): void
+    {
+        $this->excludedUrls = $urls;
+    }
 
     /**
      * Set a closure function.
@@ -487,36 +478,36 @@ class Kernel
      *
      * @return void
      */
-	public function setClosure(string $key, Closure $closure): void
-	{
-		$this->closures[$key] = $closure;
-	}
+    public function setClosure(string $key, Closure $closure): void
+    {
+        $this->closures[$key] = $closure;
+    }
 
-	/**
+    /**
      * Get current visior's path.
      *
      * @return string
      */
-	public function getCurrentUrl(): string
-	{
-		return get_request()->getUri()->getPath();
-	}
+    public function getCurrentUrl(): string
+    {
+        return get_request()->getUri()->getPath();
+    }
 
-	/**
-	 * Displayed on Firewall Panel, telling you current what type of
-	 * configuration is used.
-	 * 
-	 * @param string $type The type of configuration.
-	 *                     accepted value: demo | managed | config
-	 * 
+    /**
+     * Displayed on Firewall Panel, telling you current what type of
+     * configuration is used.
+     *
+     * @param string $type The type of configuration.
+     *                     accepted value: demo | managed | config
+     *
      * @return void
-	 */
-	public function managedBy(string $type = ''): void
-	{
-		if (in_array($type, ['managed', 'config', 'demo'])) {
-			$this->firewallType = $type;
-		}
-	}
+     */
+    public function managedBy(string $type = ''): void
+    {
+        if (in_array($type, ['managed', 'config', 'demo'])) {
+            $this->firewallType = $type;
+        }
+    }
 
     /*
     |-------------------------------------------------------------------
@@ -524,152 +515,134 @@ class Kernel
     |-------------------------------------------------------------------
     */
 
-	/**
+    /**
      * Run, run, run!
      *
-	 * Check the rule tables first, if an IP address has been listed.
-	 * Call function filter() if an IP address is not listed in rule tables.
+     * Check the rule tables first, if an IP address has been listed.
+     * Call function filter() if an IP address is not listed in rule tables.
      *
-     * @return string The response code.
-	 */
-	protected function process(): string
-	{
-		$this->initComponents();
-		
-		//        $processMethods = [
-		//            'isRuleExist',   // Stage 1 - Looking for rule table.
-		//            'isTrustedBot',  // Stage 2 - Detect popular search engine.
-		//            'isFakeRobot',   // Stage 3 - Reject fake search engine crawlers.
-		//            'isIpComponent', // Stage 4 - IP manager.
-		//            'isComponents',  // Stage 5 - Check other components.
-		//        ];
-		//        foreach ($processMethods as $method) {
-		//            if ($this->{$method}()) {
-		//                return $this->result;
-		//            }
-		//        }
-		if ( $this->{'isRuleExist'}() ) {
-			return $this->result;
-		}
-		if ( $this->{'isTrustedBot'}() ) {
-			return $this->result;
-		}
-		if ( $this->{'isFakeRobot'}() ) {
-			return $this->result;
-		}
-		if ( $this->{'isIpComponent'}() ) {
-			return $this->result;
-		}
-		if ( $this->{'isComponents'}() ) {
-			return $this->result;
-		}
+     * @return int The response code.
+     */
+    protected function process(): int
+    {
+        $this->initComponents();
 
-		// Stage 6 - Check filters if set.
-		if (array_search(true, $this->filterStatus)) {
-			return $this->result = $this->sessionHandler($this->filter());
-		}
+        $processMethods = [
+            'isRuleExist',   // Stage 1 - Looking for rule table.
+            'isTrustedBot',  // Stage 2 - Detect popular search engine.
+            'isFakeRobot',   // Stage 3 - Reject fake search engine crawlers.
+            'isIpComponent', // Stage 4 - IP manager.
+            'isComponents',  // Stage 5 - Check other components.
+        ];
 
-		// Stage 7 - Go into session limit check.
-		return $this->result = $this->sessionHandler(Enum::RESPONSE_ALLOW);
-	}
+        foreach ($processMethods as $method) {
+            if ($this->{$method}()) {
+                return $this->result;
+            }
+        }
 
-	/**
-	 * Start an action for this IP address, allow or deny, and give a reason for it.
-	 * 
-	 * @param string $actionCode The action code. - 0: deny, 1: allow, 9: unban.
-	 * @param string $reasonCode The response code.
-	 * @param string $assignIp   The IP address.
-	 * 
-	 * @return void
-	 */
-	protected function action(string $actionCode, string $reasonCode, string $assignIp = ''): void
-	{
+        // Stage 6 - Check filters if set.
+        if (array_search(true, $this->filterStatus)) {
+            return $this->result = $this->sessionHandler($this->filter());
+        }
+
+        // Stage 7 - Go into session limit check.
+        return $this->result = $this->sessionHandler(Enum::RESPONSE_ALLOW);
+    }
+
+    /**
+     * Start an action for this IP address, allow or deny, and give a reason for it.
+     *
+     * @param int    $actionCode The action code. - 0: deny, 1: allow, 9: unban.
+     * @param string $reasonCode The response code.
+     * @param string $assignIp   The IP address.
+     *
+     * @return void
+     */
+    protected function action(int $actionCode, int $reasonCode, string $assignIp = ''): void
+    {
         $ip = $this->ip;
         $rdns = $this->rdns;
         $now = time();
-		$logData = [];
-		
+        $logData = [];
+    
         if ('' !== $assignIp) {
-			$ip = $assignIp;
-			$rdns = gethostbyaddr($ip);
-		}
+            $ip = $assignIp;
+            $rdns = gethostbyaddr($ip);
+        }
 
-		if ($actionCode === Enum::ACTION_UNBAN) {
-			$this->driver->delete($ip, 'rule');
-		} else {
-			$logData['log_ip']     = $ip;
-			$logData['ip_resolve'] = $rdns;
-			$logData['time']       = $now;
-			$logData['type']       = $actionCode;
-			$logData['reason']     = $reasonCode;
-			$logData['attempts']   = 0;
+        if ($actionCode === Enum::ACTION_UNBAN) {
+            $this->driver->delete($ip, 'rule');
+        } else {
+            $logData['log_ip']     = $ip;
+            $logData['ip_resolve'] = $rdns;
+            $logData['time']       = $now;
+            $logData['type']       = $actionCode;
+            $logData['reason']     = $reasonCode;
+            $logData['attempts']   = 0;
 
-			$this->driver->save($ip, $logData, 'rule');
-		}
+            $this->driver->save($ip, $logData, 'rule');
+        }
 
-		// Remove logs for this IP address because It already has it's own rule on system.
-		// No need to count for it anymore.
-		$this->driver->delete($ip, 'filter');
+        // Remove logs for this IP address because It already has it's own rule on system.
+        // No need to count for it anymore.
+        $this->driver->delete($ip, 'filter');
 
-		$this->removeSessionsByIp($ip);
+        $this->removeSessionsByIp($ip);
 
-		// Log this action.
-		$this->log($actionCode, $ip);
+        // Log this action.
+        $this->log($actionCode, $ip);
 
-		$this->reason = $reasonCode;
-	}
+        $this->reason = $reasonCode;
+    }
 
-	/**
-	 * Log actions.
-	 * 
-	 * @param string $actionCode The code number of the action.
-	 * @param string $ip         The IP address.
-	 * 
-	 * @return void
-	 */
-	protected function log(string $actionCode, $ip = ''): void
-	{
-		if (!$this->logger) {
-			return;
-		}
+    /**
+     * Log actions.
+     *
+     * @param int    $actionCode The code number of the action.
+     * @param string $ip         The IP address.
+     *
+     * @return void
+     */
+    protected function log(int $actionCode, $ip = ''): void
+    {
+        if (!$this->logger) {
+            return;
+        }
 
-		$logData = [];
-
+        $logData = [];
+ 
         $logData['ip'] = $ip ?: $this->getIp();
-		$logData['session_id'] = get_session_instance()->getId();
-		$logData['action_code'] = $actionCode;
-		$logData['timestamp'] = time();
+        $logData['session_id'] = get_session_instance()->getId();
+        $logData['action_code'] = $actionCode;
+        $logData['timestamp'] = time();
 
-		$this->logger->add($logData);
-	}
+        $this->logger->add($logData);
+    }
 
-	/**
-	 * Get a class name without namespace string.
-	 * 
-	 * @param object $instance Class
-	 * 
+    /**
+     * Get a class name without namespace string.
+     *
+     * @param object $instance Class
+     *
      * @return string
-	 */
-	protected function getClassName($instance): string
-	{
-		$class = get_class($instance);
-		return substr($class, strrpos($class, '\\') + 1);
-	}
+     */
+    protected function getClassName($instance): string
+    {
+        $class = get_class($instance);
+        return substr($class, strrpos($class, '\\') + 1);
+    }
 
-	/**
-	 * Save and return the result identifier.
-	 * This method is for passing value from traits.
-	 * RESPONSE_ALLOW
-	 * RESPONSE_DENY
-	 * RESPONSE_TEMPORARILY_DENY
-	 * RESPONSE_LIMIT_SESSION
-	 * 
-	 * @param string $resultCode The result identifier.
-	 * 
-	 * @return string
-	 */
-	protected function setResultCode(string $resultCode): string
-	{
-		return $this->result = $resultCode;
-	}
+    /**
+     * Save and return the result identifier.
+     * This method is for passing value from traits.
+     *
+     * @param int $resultCode The result identifier.
+     *
+     * @return int
+     */
+    protected function setResultCode(int $resultCode): int
+    {
+        return $this->result = $resultCode;
+    }
 }

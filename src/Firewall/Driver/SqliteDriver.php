@@ -20,9 +20,9 @@
 
 declare(strict_types=1);
 
-namespace WPShieldon\Firewall\Driver;
+namespace Shieldon\Firewall\Driver;
 
-use WPShieldon\Firewall\Driver\SqlDriverProvider;
+use Shieldon\Firewall\Driver\SqlDriverProvider;
 use Exception;
 use PDO;
 
@@ -31,7 +31,7 @@ use PDO;
  */
 class SqliteDriver extends SqlDriverProvider
 {
-	/**
+    /**
      * Constructor.
      *
      * @param PDO  $pdo   The PDO instance.
@@ -39,26 +39,29 @@ class SqliteDriver extends SqlDriverProvider
      *
      * @return void
      */
-	public function __construct(PDO $pdo, bool $debug = false)
-	{
-		parent::__construct($pdo, $debug);
-	}
+    public function __construct(PDO $pdo, bool $debug = false)
+    {
+        parent::__construct($pdo, $debug);
+    }
 
-	/**
+    /**
      * Create SQL tables that Shieldon needs.
      *
      * @return bool
      */
-	protected function installSql(): bool
-	{
-		try {
-			$this->db->query("
+    protected function installSql(): bool
+    {
+        try {
+            $sql = "
                 CREATE TABLE IF NOT EXISTS {$this->tableFilterLogs} (
                     log_ip VARCHAR(46) PRIMARY KEY,
                     log_data BLOB
                 );
-            ");
-			$this->db->query("
+            ";
+
+            $this->db->query($sql);
+
+            $sql = "
                 CREATE TABLE IF NOT EXISTS {$this->tableRuleList} (
                     log_ip VARCHAR(46) PRIMARY KEY, 
                     ip_resolve VARCHAR(255), 
@@ -67,8 +70,11 @@ class SqliteDriver extends SqlDriverProvider
                     time INT(10),
                     attempts INT(10)
                 );
-            ");
-			$this->db->query("
+            ";
+
+            $this->db->query($sql);
+
+            $sql = "
                 CREATE TABLE IF NOT EXISTS {$this->tableSessions} (
                     id VARCHAR(40) PRIMARY KEY, 
                     ip VARCHAR(46),
@@ -76,32 +82,40 @@ class SqliteDriver extends SqlDriverProvider
                     microtimestamp BIGINT(20),
                     data
                 );
-            ");
-			return true;
-		} catch (Exception $e) {
-			return false;
-		}
-	}
+            ";
 
-	/**
-	 * Check required tables exist or not.
+            $this->db->query($sql);
+
+            return true;
+
+            // @codeCoverageIgnoreStart
+        } catch (Exception $e) {
+            return false;
+        }
+        // @codeCoverageIgnoreEnd
+    }
+
+    /**
+     * Check required tables exist or not.
      *
      * @return bool
-	 */
-	protected function checkTableExists(): bool
-	{
-		// Try a select statement against the table
-		// Run it in try/catch in case PDO is in ERRMODE_EXCEPTION.
-		// $debug should be false, otherwise an error occurs.
+     */
+    protected function checkTableExists(): bool
+    {
+        // Try a select statement against the table
+        // Run it in try/catch in case PDO is in ERRMODE_EXCEPTION.
+        // $debug should be false, otherwise an error occurs.
+        
+        try {
+            $result = $this->db->query("SELECT 1 FROM $this->tableFilterLogs LIMIT 1");
 
-		try {
-			$result = $this->db->query("SELECT 1 FROM $this->tableFilterLogs LIMIT 1");
+            // @codeCoverageIgnoreStart
+        } catch (Exception $e) {
+            // We got an exception == table not found
+            return false;
+        }
+        // @codeCoverageIgnoreEnd
 
-		} catch (Exception $e) {
-			// We got an exception == table not found
-			return false;
-		}
-		
-		return ($result !== false);
-	}
+        return ($result !== false);
+    }
 }

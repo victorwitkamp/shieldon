@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace WPShieldon\Firewall\Firewall\Messenger;
+namespace Shieldon\Firewall\Firewall\Messenger;
 
 use Shieldon\Messenger\Messenger\MessengerInterface;
 use Shieldon\Messenger\RocketChat;
@@ -30,20 +30,20 @@ use Shieldon\Messenger\RocketChat;
  */
 class ItemRocketChat
 {
-	/**
-	 * Initialize and get the instance.
+    /**
+     * Initialize and get the instance.
      *
-	 * @param array $setting The configuration of that messanger.
+     * @param array $setting The configuration of that messanger.
      *
      * @return MessengerInterface
-	 */
-	public static function get(array $setting): MessengerInterface 
-	{
+     */
+    public static function get(array $setting): MessengerInterface
+    {
         $serverUrl   = $setting['config']['server_url'] ?? '';
         $userId      = $setting['config']['user_id'] ?? '';
-		$accessToken = $setting['config']['access_token'] ?? '';
+        $accessToken = $setting['config']['access_token'] ?? '';
         $channel     = $setting['config']['channel'] ?? '';
 
-		return new RocketChat($accessToken, $userId, $serverUrl, $channel);
-	}
+        return new RocketChat($accessToken, $userId, $serverUrl, $channel);
+    }
 }

@@ -19,7 +19,9 @@
  */
 
 declare(strict_types=1);
-namespace WPShieldon\Firewall\Driver;
+
+namespace Shieldon\Firewall\Driver;
+
 use RuntimeException;
 use function is_dir;
 use function mkdir;
@@ -27,7 +29,7 @@ use function str_replace;
 use function umask;
 
 /**
- * File Driver Trait
+ * SQL Driver Trait
  */
 trait FileDriverTrait
 {
@@ -36,88 +38,88 @@ trait FileDriverTrait
      *
      * @return bool
      */
-	protected function createDirectory(): bool
-	{
-		$conA = $conB = $conC = false;
+    protected function createDirectory(): bool
+    {
+        $conA = $conB = $conC = false;
 
-		$originalUmask = umask(0);
+        $originalUmask = umask(0);
 
-		if (!is_dir($this->getDirectory('filter'))) {
-			$conA = mkdir($this->getDirectory('filter'), 0777, true);
-		}
+        if (!is_dir($this->getDirectory('filter'))) {
+            $conA = mkdir($this->getDirectory('filter'), 0777, true);
+        }
 
-		if (!is_dir($this->getDirectory('rule'))) {
-			$conB = mkdir($this->getDirectory('rule'), 0777, true);
-		}
+        if (!is_dir($this->getDirectory('rule'))) {
+            $conB = mkdir($this->getDirectory('rule'), 0777, true);
+        }
 
-		if (!is_dir($this->getDirectory('session'))) {
-			$conC = mkdir($this->getDirectory('session'), 0777, true);
-		}
+        if (!is_dir($this->getDirectory('session'))) {
+            $conC = mkdir($this->getDirectory('session'), 0777, true);
+        }
 
-		umask($originalUmask);
+        umask($originalUmask);
 
-		if ($conA && $conB && $conC) {
-			return true;
-		}
+        if ($conA && $conB && $conC) {
+            return true;
+        }
 
-		return false;
-	}
+        return false;
+    }
 
-	/**
-	 * Check the directory if is writable.
-	 * 
-	 * Not real use in Kernel. only use it in unit tests.
-	 * 
+    /**
+     * Check the directory if is writable.
+     *
+     * Not real use in Kernel. only use it in unit tests.
+     *
      * @return bool
-	 */
-	protected function checkDirectory(): bool
-	{
-		if (!is_dir($this->directory) ||
-		!is_writable($this->directory)
-		) {
-			throw new RuntimeException(
-				'The directory defined by File Driver must be writable. (' . $this->directory . ')'
-			);
-		}
+     */
+    protected function checkDirectory(): bool
+    {
+        if (!is_dir($this->directory) ||
+            !is_writable($this->directory)
+        ) {
+            throw new RuntimeException(
+                'The directory defined by File Driver must be writable. (' . $this->directory . ')'
+            );
+        }
 
-		return true;
-	}
+        return true;
+    }
 
-	/**
-	 * Get filename.
-	 * 
+    /**
+     * Get filename.
+     *
      * @param string $ip   IP address.
-	 * @param string $type The table name of the data cycle.
-	 * 
+     * @param string $type The table name of the data cycle.
+     *
      * @return string
-	 */
-	private function getFilename(string $ip, string $type = 'filter'): string
-	{
-		$ip = str_replace(':', '-', $ip);
-		$path = [];
+     */
+    private function getFilename(string $ip, string $type = 'filter'): string
+    {
+        $ip = str_replace(':', '-', $ip);
+        $path = [];
 
-		$path['filter']  = $this->directory . '/' . $this->tableFilterLogs . '/' . $ip . '.' . $this->extension;
-		$path['session'] = $this->directory . '/' . $this->tableSessions   . '/' . $ip . '.' . $this->extension;
-		$path['rule']    = $this->directory . '/' . $this->tableRuleList   . '/' . $ip . '.' . $this->extension;
+        $path['filter']  = $this->directory . '/' . $this->tableFilterLogs . '/' . $ip . '.' . $this->extension;
+        $path['session'] = $this->directory . '/' . $this->tableSessions   . '/' . $ip . '.' . $this->extension;
+        $path['rule']    = $this->directory . '/' . $this->tableRuleList   . '/' . $ip . '.' . $this->extension;
 
-		return $path[$type] ?? '';
-	}
+        return $path[$type] ?? '';
+    }
 
-	/**
-	 * Get directory.
-	 * 
-	 * @param string $type The table name of the data cycle.
-	 * 
+    /**
+     * Get directory.
+     *
+     * @param string $type The table name of the data cycle.
+     *
      * @return string
-	 */
-	private function getDirectory(string $type = 'filter'): string
-	{
-		$path = [];
+     */
+    private function getDirectory(string $type = 'filter'): string
+    {
+        $path = [];
 
-		$path['filter']  = $this->directory . '/' . $this->tableFilterLogs;
-		$path['session'] = $this->directory . '/' . $this->tableSessions;
-		$path['rule']    = $this->directory . '/' . $this->tableRuleList;
+        $path['filter']  = $this->directory . '/' . $this->tableFilterLogs;
+        $path['session'] = $this->directory . '/' . $this->tableSessions;
+        $path['rule']    = $this->directory . '/' . $this->tableRuleList;
 
-		return $path[$type] ?? '';
-	}
+        return $path[$type] ?? '';
+    }
 }

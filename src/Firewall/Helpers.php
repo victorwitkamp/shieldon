@@ -20,15 +20,14 @@
 
 declare(strict_types=1);
 
-namespace WPShieldon\Firewall;
+namespace Shieldon\Firewall;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use WPShieldon\Firewall\Container;
-use WPShieldon\Firewall\Driver\FileDriver;
-use WPShieldon\Firewall\HttpFactory;
-use WPShieldon\Firewall\Session;
-use function define;
+use Shieldon\Firewall\Container;
+use Shieldon\Firewall\Driver\FileDriver;
+use Shieldon\Firewall\HttpFactory;
+use Shieldon\Firewall\Session;
 use function explode;
 use function file_exists;
 use function file_put_contents;
@@ -45,7 +44,8 @@ use function round;
 use function shell_exec;
 use function str_repeat;
 use function str_replace;
-use function strlen;
+use function stripos;
+use function strtoupper;
 use function substr;
 use function sys_getloadavg;
 use function time;
@@ -103,26 +103,56 @@ class Helpers
  *
  * @return string
  */
-function __(string $filename, string $langcode, $placeholder = '', array $replacement = []): string
+function __(): string
 {
-	
-	// If we don't get the string from the localization file, use placeholder
+    /**
+     * Load locale string from i18n files and store them into this array
+     * for further use.
+     *
+     * @var array
+     */
+    static $i18n;
+
+    /**
+     * Check the file exists for not.
+     *
+     * @var array
+     */
+    static $fileChecked;
+
+    $num = func_num_args();
+
+    $filename    = func_get_arg(0); // required.
+    $langcode    = func_get_arg(1); // required.
+    $placeholder = ($num > 2) ? func_get_arg(2) : '';
+    $replacement = ($num > 3) ? func_get_arg(3) : [];
+    $lang        = get_user_lang();
+
+    if (empty($i18n[$filename]) && empty($fileChecked[$filename])) {
+        $fileChecked[$filename] = true;
+        $i18n[$filename] = include_i18n_file($lang, $filename);
+    }
+
+    // If we don't get the string from the localization file, use placeholder
     // instead.
     $resultString = $placeholder;
 
+    if (!empty($i18n[$filename][$langcode])) {
+        $resultString = $i18n[$filename][$langcode];
+    }
 
-	if (is_array($replacement)) {
-		/**
-		 * Example:
-		 *     __('test', 'example_string', 'Search results: {0} items. Total items: {1}.', [5, 150]);
-		 * 
-		 * Result:
-		 *     Search results: 5 items. Total items: 150.
-		 */
-		foreach ($replacement as $i => $r) {
+    if (is_array($replacement)) {
+        /**
+         * Example:
+         *     __('test', 'example_string', 'Search results: {0} items. Total items: {1}.', [5, 150]);
+         *
+         * Result:
+         *     Search results: 5 items. Total items: 150.
+         */
+        foreach ($replacement as $i => $r) {
             $resultString = str_replace('{' . $i . '}', (string) $replacement[$i], (string) $resultString);
-		}
-	}
+        }
+    }
     
     return str_replace("'", '’', $resultString);
 }
@@ -214,16 +244,16 @@ function include_i18n_file(string $lang, string $filename): array
  */
 function mask_string($str): string
 {
-	if (filter_var($str, FILTER_VALIDATE_IP) !== false) {
-		$tmp = explode('.', $str);
-		$tmp[0] = '*';
-		$tmp[1] = '*';
-		$masked = implode('.', $tmp);
-	} else {
-		$masked = str_repeat('*', strlen($str) - 6) . substr($str, -6);
-	}
+    if (filter_var($str, FILTER_VALIDATE_IP) !== false) {
+        $tmp = explode('.', $str);
+        $tmp[0] = '*';
+        $tmp[1] = '*';
+        $masked = implode('.', $tmp);
+    } else {
+        $masked = str_repeat('*', strlen($str) - 6) . substr($str, -6);
+    }
 
-	return $masked;
+    return $masked;
 }
 
 /**
@@ -286,71 +316,71 @@ function get_memory_usage(): string
  */
 function get_default_properties(): array
 {
-	return [
+    return [
 
-		'time_unit_quota' => [
-			's' => 2,
-			'm' => 10,
-			'h' => 30,
-			'd' => 60,
-		],
+        'time_unit_quota' => [
+            's' => 2,
+            'm' => 10,
+            'h' => 30,
+            'd' => 60,
+        ],
 
-		'time_reset_limit'       => 3600,
-		'interval_check_referer' => 5,
-		'interval_check_session' => 5,
-		'limit_unusual_behavior' => [
-			'cookie'  => 5,
-			'session' => 5,
-			'referer' => 10,
-		],
+        'time_reset_limit'       => 3600,
+        'interval_check_referer' => 5,
+        'interval_check_session' => 5,
+        'limit_unusual_behavior' => [
+            'cookie'  => 5,
+            'session' => 5,
+            'referer' => 10,
+        ],
 
-		'cookie_name'         => 'ssjd',
-		'cookie_domain'       => '',
-		'cookie_value'        => '1',
-		'display_online_info' => true,
-		'display_user_info'   => true,
-		'display_http_code'   => true,
-		'display_reason_code' => true,
-		'display_reason_text' => true,
+        'cookie_name'         => 'ssjd',
+        'cookie_domain'       => '',
+        'cookie_value'        => '1',
+        'display_online_info' => true,
+        'display_user_info'   => false,
+        'display_http_code'   => false,
+        'display_reason_code' => false,
+        'display_reason_text' => false,
 
-		/**
-		 * If you set this option enabled, Shieldon will record every CAPTCHA fails
-		 * in a row, once that user have reached the limitation number, Shieldon will
-		 * put it as a blocked IP in rule table, until the new data cycle begins.
-		 * 
-		 * Once that user have been blocked, they are still access the warning page,
-		 * it means that they are not humain for sure, so let's throw them into the
-		 * system firewall and say goodbye to them forever.
-		 */
-		'deny_attempt_enable' => [
-			'data_circle'     => true,
-			'system_firewall' => false,
-		],
+        /**
+         * If you set this option enabled, Shieldon will record every CAPTCHA fails
+         * in a row, once that user have reached the limitation number, Shieldon will
+         * put it as a blocked IP in rule table, until the new data cycle begins.
+         *
+         * Once that user have been blocked, they are still access the warning page,
+         * it means that they are not humain for sure, so let's throw them into the
+         * system firewall and say goodbye to them forever.
+         */
+        'deny_attempt_enable' => [
+            'data_circle'     => false,
+            'system_firewall' => false,
+        ],
 
-		'deny_attempt_notify' => [
-			'data_circle'     => false,
-			'system_firewall' => false,
-		],
+        'deny_attempt_notify' => [
+            'data_circle'     => false,
+            'system_firewall' => false,
+        ],
 
-		'deny_attempt_buffer' => [
-			'data_circle'     => 10,
-			'system_firewall' => 10,
-		],
+        'deny_attempt_buffer' => [
+            'data_circle'     => 10,
+            'system_firewall' => 10,
+        ],
 
-		/**
-					 * To prevent dropping social platform robots into iptables firewall, such
-					 * as Facebook, Line and others who scrape snapshots from your web pages,
-					 * you should adjust the values below to fit your needs. (unit: second)
-					 */
-		'record_attempt_detection_period' => 5, // 5 seconds.
+        /**
+         * To prevent dropping social platform robots into iptables firewall, such
+         * as Facebook, Line and others who scrape snapshots from your web pages,
+         * you should adjust the values below to fit your needs. (unit: second)
+         */
+        'record_attempt_detection_period' => 5, // 5 seconds.
 
-		// Reset the counter after n second.
-		'reset_attempt_counter' => 1800, // 30 minutes.
+        // Reset the counter after n second.
+        'reset_attempt_counter' => 1800, // 30 minutes.
 
-		// System-layer firewall, ip6table service watches this folder to 
-		// receive command created by Shieldon Firewall.
-		'iptables_watching_folder' => '/tmp/',
-	];
+        // System-layer firewall, ip6table service watches this folder to
+        // receive command created by Shieldon Firewall.
+        'iptables_watching_folder' => '/tmp/',
+    ];
 }
 
 /*
@@ -366,14 +396,14 @@ function get_default_properties(): array
  */
 function get_request(): ServerRequestInterface
 {
-	$request = Container::get('request');
+    $request = Container::get('request');
 
-	if (is_null($request)) {
-		$request = HttpFactory::createRequest();
-		Container::set('request', $request);
-	}
+    if (is_null($request)) {
+        $request = HttpFactory::createRequest();
+        Container::set('request', $request);
+    }
 
-	return $request;
+    return $request;
 }
 
 /**
@@ -383,14 +413,14 @@ function get_request(): ServerRequestInterface
  */
 function get_response(): ResponseInterface
 {
-	$response = Container::get('response');
+    $response = Container::get('response');
 
-	if (is_null($response)) {
-		$response = HttpFactory::createResponse();
-		Container::set('response', $response);
-	}
+    if (is_null($response)) {
+        $response = HttpFactory::createResponse();
+        Container::set('response', $response);
+    }
 
-	return $response;
+    return $response;
 }
 
 /**
@@ -402,7 +432,7 @@ function get_response(): ResponseInterface
  */
 function set_request(ServerRequestInterface $request): void
 {
-	Container::set('request', $request, true);
+    Container::set('request', $request, true);
 }
 
 /**
@@ -414,7 +444,7 @@ function set_request(ServerRequestInterface $request): void
  */
 function set_response(ResponseInterface $response): void
 {
-	Container::set('response', $response, true);
+    Container::set('response', $response, true);
 }
 
 /*
@@ -425,142 +455,136 @@ function set_response(ResponseInterface $response): void
 
 /**
  * Unset cookie.
- * 
+ *
  * @param string|null $name The name (key) in the array of the superglobal.
  *
  * @return void
  */
 function unset_global_cookie($name = null): void
 {
-	if (empty($name)) {
-		$cookieParams = get_request()->getCookieParams();
-		set_request(get_request()->withCookieParams([]));
+    if (empty($name)) {
+        $cookieParams = get_request()->getCookieParams();
+        set_request(get_request()->withCookieParams([]));
 
-		foreach (array_keys($cookieParams) as $name) {
-			set_response(
-				get_response()->withHeader(
-					'Set-Cookie',
-					"$name=; expires=Thu, 01-Jan-1970 00:00:01 GMT; Max-Age=0"
-				)
-			);
-		}
-		$_COOKIE = [];
+        foreach (array_keys($cookieParams) as $name) {
+            set_response(
+                get_response()->withHeader(
+                    'Set-Cookie',
+                    "$name=; expires=Thu, 01-Jan-1970 00:00:01 GMT; Max-Age=0"
+                )
+            );
+        }
+        $_COOKIE = [];
 
-		return;
-	}
+        return;
+    }
 
-	$cookieParams = get_request()->getCookieParams();
-	unset($cookieParams[$name]);
+    $cookieParams = get_request()->getCookieParams();
+    unset($cookieParams[$name]);
 
-	set_request(
-		get_request()->withCookieParams(
-			$cookieParams
-		)
-	);
+    set_request(
+        get_request()->withCookieParams(
+            $cookieParams
+        )
+    );
 
-	set_response(
-		get_response()->withHeader(
-			'Set-Cookie',
-			"$name=; expires=Thu, 01-Jan-1970 00:00:01 GMT; Max-Age=0"
-		)
-	);
-	// Prevent direct access to superglobal.
-	unset($_COOKIE[$name]);
+    set_response(
+        get_response()->withHeader(
+            'Set-Cookie',
+            "$name=; expires=Thu, 01-Jan-1970 00:00:01 GMT; Max-Age=0"
+        )
+    );
+    // Prevent direct access to superglobal.
+    unset($_COOKIE[$name]);
 }
 
 /**
  * Unset post.
- * 
+ *
  * @param string|null $name The name (key) in the array of the superglobal.
- * 
+ *
  * @return void
  */
 function unset_global_post($name = null): void
 {
-	if (empty($name)) {
-		set_request(get_request()->withParsedBody([]));
-		$_POST = [];
+    if (empty($name)) {
+        set_request(get_request()->withParsedBody([]));
+        $_POST = [];
 
-		return;
-	}
+        return;
+    }
 
-	$postParams = get_request()->getParsedBody();
-	unset($postParams[$name]);
-	set_request(get_request()->withParsedBody($postParams));
-	unset($_POST[$name]);
+    $postParams = get_request()->getParsedBody();
+    unset($postParams[$name]);
+    set_request(get_request()->withParsedBody($postParams));
+    unset($_POST[$name]);
 }
 
 /**
  * Unset get.
- * 
+ *
  * @param string|null $name The name (key) in the array of the superglobal.
- * 
+ *
  * @return void
  */
 function unset_global_get($name = null): void
 {
-	if (empty($name)) {
-		set_request(get_request()->withQueryParams([]));
-		$_GET = [];
+    if (empty($name)) {
+        set_request(get_request()->withQueryParams([]));
+        $_GET = [];
 
-		return;
-	}
+        return;
+    }
 
-	$getParams = get_request()->getQueryParams();
-	unset($getParams[$name]);
-	set_request(get_request()->withQueryParams($getParams));
-	unset($_GET[$name]);
+    $getParams = get_request()->getQueryParams();
+    unset($getParams[$name]);
+    set_request(get_request()->withQueryParams($getParams));
+    unset($_GET[$name]);
 }
 
 /**
  * Unset session.
- * 
+ *
  * @param string|null $name The name (key) in the array of the superglobal.
- * 
+ *
  * @return void
  */
 function unset_global_session($name = null): void
 {
-	if (empty($name)) {
-		get_session_instance()->clear();
-		get_session_instance()->save();
-		return;
-	}
+    if (empty($name)) {
+        get_session_instance()->clear();
+        get_session_instance()->save();
+        return;
+    }
 
-	get_session_instance()->remove($name);
-	get_session_instance()->save();
+    get_session_instance()->remove($name);
+    get_session_instance()->save();
 }
 
 /**
  * Unset a variable of superglobal.
- * 
+ *
  * @param string|null $name The name (key) in the array of the superglobal.
  *                          If $name is null that means clear all.
  * @param string      $type The type of the superglobal.
- * 
+ *
  * @return void
  */
 function unset_superglobal($name, string $type): void
 {
-	$types = [
-		'get',
-		'post',
-		'cookie',
-		'session',
-	];
+    $types = [
+        'get',
+        'post',
+        'cookie',
+        'session',
+    ];
 
     if (!in_array($type, $types)) {
-		return;
-	}
-	if ( $type === 'get' ) {
-		unset_global_get( $name );
-	} elseif ( $type === 'post' ) {
-		unset_global_post( $name );
-	} elseif ( $type === 'cookie' ) {
-		unset_global_cookie( $name );
-	} elseif ( $type === 'session' ) {
-		unset_global_session( $name );
-	}
+        return;
+    }
+
+    $method = '\Shieldon\Firewall\unset_global_' . $type;
+    $method($name, $type);
 }
 
 /*
@@ -576,13 +600,13 @@ function unset_superglobal($name, string $type): void
  */
 function get_ip(): string
 {
-	$ip = Container::get('ip_address');
+    $ip = Container::get('ip_address');
+    
+    if (empty($ip)) {
+        $ip = $_SERVER['REMOTE_ADDR'];
+    }
 
-	if (empty($ip)) {
-		$ip = $_SERVER['REMOTE_ADDR'];
-	}
-
-	return $ip;
+    return $ip;
 }
 
 /**
@@ -594,7 +618,7 @@ function get_ip(): string
  */
 function set_ip(string $ip)
 {
-	Container::set('ip_address', $ip, true);
+    Container::set('ip_address', $ip, true);
 }
 
 /*
@@ -608,10 +632,10 @@ function set_ip(string $ip)
  *
  * @return string
  */
-function get_microtimestamp(): string
+function get_microtimestamp()
 {
-	$microtimestamp = explode(' ', microtime());
-	$microtimestamp = $microtimestamp[1] . str_replace('0.', '', $microtimestamp[0]);
+    $microtimestamp = explode(' ', microtime());
+    $microtimestamp = $microtimestamp[1] . str_replace('0.', '', $microtimestamp[0]);
 
     return $microtimestamp;
 }
@@ -629,33 +653,33 @@ function get_microtimestamp(): string
  */
 function get_session_instance(): Session
 {
-	$session = Container::get('session');
+    $session = Container::get('session');
 
-	if (is_null($session)) {
+    if (is_null($session)) {
         $session = HttpFactory::createSession(get_session_id());
-		set_session_instance($session);
-	}
+        set_session_instance($session);
+    }
 
-	return $session;
+    return $session;
 }
 
 /**
  * For unit testing purpose. Not use in production.
  * Create new session by specifying a session ID.
- * 
+ *
  * @param string $sessionId A session ID string.
  *
  * @return void
  */
 function create_new_session_instance(string $sessionId)
 {
-	Container::set('session_id', $sessionId, true);
-	$session = Container::get('session');
+    Container::set('session_id', $sessionId, true);
+    $session = Container::get('session');
 
-	if ($session instanceof Session) {
-		$session->setId($sessionId);
-		set_session_instance($session);
-	}
+    if ($session instanceof Session) {
+        $session->setId($sessionId);
+        set_session_instance($session);
+    }
 }
 
 /**
@@ -728,7 +752,7 @@ function get_mock_session($sessionId): Session
  */
 function set_session_instance(Session $session): void
 {
-	Container::set('session', $session, true);
+    Container::set('session', $session, true);
 }
 
 /**
@@ -738,19 +762,19 @@ function set_session_instance(Session $session): void
  */
 function get_session_id(): string
 {
-	static $sessionId;
+    static $sessionId;
 
     if (!$sessionId) {
-		$cookie = get_request()->getCookieParams();
+        $cookie = get_request()->getCookieParams();
 
         if (!empty($cookie['_shieldon'])) {
-			$sessionId = $cookie['_shieldon'];
-		} else {
-			$sessionId = create_session_id();
-		}
-	}
+            $sessionId = $cookie['_shieldon'];
+        } else {
+            $sessionId = create_session_id();
+        }
+    }
 
-	return $sessionId;
+    return $sessionId;
 }
 
 /**
@@ -760,7 +784,7 @@ function get_session_id(): string
  */
 function create_session_id(): string
 {
-	$hash = rand() . 'ej;1zj47vu;3e;31g642941ek62au/41' . time();
+    $hash = rand() . 'ej;1zj47vu;3e;31g642941ek62au/41' . time();
 
-	return md5($hash);
+    return md5($hash);
 }

@@ -33,53 +33,53 @@ use Shieldon\Psr7\Response;
  */
 class Header implements MiddlewareInterface
 {
-	/**
-	 * 406 - Not Acceptable.
+    /**
+     * 406 - Not Acceptable.
      *
-	 * @var int
-	 */
-	public const HTTP_STATUS_CODE = 406;
-	
-	/**
-	 * Very common requests from normal users.
+     * @var int
+     */
+    const HTTP_STATUS_CODE = 406;
+
+    /**
+     * Very common requests from normal users.
      *
      * @var array
-	 */
-	protected array $fieldList = [
-		'Accept',
-		'Accept-Language',
-		'Accept-Encoding',
-	];
+     */
+    protected $fieldList = [
+        'Accept',
+        'Accept-Language',
+        'Accept-Encoding',
+    ];
 
-	/**
-	 * Constructor.
+    /**
+     * Constructor.
      *
-	 * @param array $fieldList The list that want to be denied.
+     * @param array $fieldList The list that want to be denied.
      *
-	 * @return void
-	 */
+     * @return void
+     */
     public function __construct(array $fieldList = [])
     {
         if (!empty($fieldList)) {
-			$this->fieldList = $fieldList;
-		}
-	}
+            $this->fieldList = $fieldList;
+        }
+    }
 
-	/**
-	 * Invoker.
+    /**
+     * Invoker.
      *
-	 * @param ServerRequestInterface  $request The PSR-7 server request.
-	 * @param RequestHandlerInterface $handler The PSR-15 request handler.
+     * @param ServerRequestInterface  $request The PSR-7 server request.
+     * @param RequestHandlerInterface $handler The PSR-15 request handler.
      *
      * @return ResponseInterface
-	 */
+     */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
-	{
+    {
         foreach ($this->fieldList as $fieldName) {
             if (!$request->hasHeader($fieldName)) {
                 return (new Response)->withStatus(self::HTTP_STATUS_CODE);
-			}
-		}
+            }
+        }
         return $handler->handle($request);
-	}
+    }
 }

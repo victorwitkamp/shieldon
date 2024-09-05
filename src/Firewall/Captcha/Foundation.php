@@ -20,12 +20,12 @@
 
 declare(strict_types=1);
 
-namespace WPShieldon\Firewall\Captcha;
+namespace Shieldon\Firewall\Captcha;
 
-use WPShieldon\Firewall\Captcha\CaptchaProvider;
+use Shieldon\Firewall\Captcha\CaptchaProvider;
 
-use function WPShieldon\Firewall\get_request;
-use function WPShieldon\Firewall\unset_superglobal;
+use function Shieldon\Firewall\get_request;
+use function Shieldon\Firewall\unset_superglobal;
 
 /**
  * Basic form.
@@ -41,46 +41,46 @@ class Foundation extends CaptchaProvider
      *
      * @return void
      */
-	public function __construct()
-	{
-		parent::__construct();
-	}
+    public function __construct()
+    {
+        parent::__construct();
+    }
 
     /**
      * Response the result.
      *
      * @return bool
      */
-	public function response(): bool
-	{
-		$postParams = get_request()->getParsedBody();
+    public function response(): bool
+    {
+        $postParams = get_request()->getParsedBody();
+ 
+        if (empty($postParams['shieldon_captcha'])) {
+            return false;
+        }
 
-		if (empty($postParams['shieldon_captcha'])) {
-			return false;
-		}
+        $flag = false;
 
-		$flag = false;
+        if ($postParams['shieldon_captcha'] === 'ok') {
+            $flag = true;
+        }
 
-		if ($postParams['shieldon_captcha'] === 'ok') {
-			$flag = true;
-		}
+        // Prevent detecting POST method on RESTful frameworks.
+        unset_superglobal('shieldon_captcha', 'post');
 
-		// Prevent detecting POST method on RESTful frameworks.
-		unset_superglobal('shieldon_captcha', 'post');
+        return $flag;
+    }
 
-		return $flag;
-	}
-
-	/**
+    /**
      * Output a required HTML.
      *
      * @return string
      */
-	public function form(): string
-	{
-		$html  = '<input id="shieldon-captcha-example" type="hidden" name="shieldon_captcha">';
-		$html .= '<script>document.getElementById("shieldon-captcha-example").value = "ok";</script>';
+    public function form(): string
+    {
+        $html  = '<input id="shieldon-captcha-example" type="hidden" name="shieldon_captcha">';
+        $html .= '<script>document.getElementById("shieldon-captcha-example").value = "ok";</script>';
 
-		return $html;
-	}
+        return $html;
+    }
 }
