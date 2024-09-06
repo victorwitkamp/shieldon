@@ -20,12 +20,12 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Kernel;
+namespace WPShieldon\Firewall\Kernel;
 
-use Shieldon\Firewall\Kernel\Enum;
-use Shieldon\Firewall\Component\ComponentProvider;
-use Shieldon\Firewall\Component\TrustedBot;
-use Shieldon\Firewall\Component\Ip;
+use WPShieldon\Firewall\Kernel\Enum;
+use WPShieldon\Firewall\Component\ComponentProvider;
+use WPShieldon\Firewall\Component\TrustedBot;
+use WPShieldon\Firewall\Component\Ip;
 
 /*
  * @since 1.0.0
@@ -53,13 +53,13 @@ trait ComponentTrait
     /**
      * Start an action for this IP address, allow or deny, and give a reason for it.
      *
-     * @param int    $actionCode The action code. - 0: deny, 1: allow, 9: unban.
+     * @param string $actionCode The action code. - 0: deny, 1: allow, 9: unban.
      * @param string $reasonCode The response code.
      * @param string $assignIp   The IP address.
      *
      * @return void
      */
-    abstract protected function action(int $actionCode, int $reasonCode, string $assignIp = ''): void;
+    abstract protected function action(string $actionCode, string $reasonCode, string $assignIp = ''): void;
 
     /**
      * Deal with online sessions.
@@ -68,7 +68,7 @@ trait ComponentTrait
      *
      * @return int The response code.
      */
-    abstract protected function sessionHandler($statusCode): int;
+    abstract protected function sessionHandler(string $statusCode): string;
 
     /**
      * Save and return the result identifier.
@@ -78,14 +78,14 @@ trait ComponentTrait
      *
      * @return int
      */
-    abstract protected function setResultCode(int $resultCode): int;
+    abstract protected function setResultCode(string $resultCode): string;
 
     /**
      * Container for Shieldon components.
      *
      * @var array
      */
-    public $component = [];
+    public array $component = [];
 
     /**
      * Set a commponent.
@@ -107,13 +107,9 @@ trait ComponentTrait
      *
      * @return ComponentProvider|null
      */
-    public function getComponent(string $name)
+    public function getComponent(string $name): ?ComponentProvider
     {
-        if (!isset($this->component[$name])) {
-            return null;
-        }
-
-        return $this->component[$name];
+        return $this->component[$name] ?? null;
     }
 
     /**
@@ -156,7 +152,7 @@ trait ComponentTrait
      *
      * @return bool
      */
-    protected function isTrustedBot()
+    protected function isTrustedBot(): bool
     {
         $trustedBot = $this->getComponent('TrustedBot');
 
@@ -192,6 +188,7 @@ trait ComponentTrait
                 }
                 // Allowed robots not join to our traffic handler.
                 $this->setResultCode(Enum::RESPONSE_ALLOW);
+                $this->psrlogger->warning('Shieldon - Shieldon - isTrustedBot true');
                 return true;
             }
         }
@@ -215,6 +212,7 @@ trait ComponentTrait
                     Enum::REASON_COMPONENT_TRUSTED_ROBOT_DENIED
                 );
                 $this->setResultCode(Enum::RESPONSE_DENY);
+                $this->psrlogger->warning('Shieldon - Shieldon - isFakeRobot true');
                 return true;
             }
         }
@@ -250,6 +248,7 @@ trait ComponentTrait
 
                 // $resultCode = $actionCode
                 $this->setResultCode($this->sessionHandler($actionCode));
+                $this->psrlogger->warning('Shieldon - ComponentTrait - isIpComponent true');
                 return true;
             }
         }
@@ -261,7 +260,7 @@ trait ComponentTrait
      *
      * @return bool
      */
-    protected function isComponents()
+    protected function isComponents(): bool
     {
         foreach ($this->component as $component) {
             if ($component->isDenied()) {

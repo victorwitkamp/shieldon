@@ -20,9 +20,9 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Captcha;
+namespace WPShieldon\Firewall\Captcha;
 
-use Shieldon\Firewall\Captcha\CaptchaProvider;
+use WPShieldon\Firewall\Captcha\CaptchaProvider;
 
 /**
  * Add form fields for the CSRF features of some frameworks.
@@ -34,14 +34,14 @@ class Csrf extends CaptchaProvider
      *
      * @var string
      */
-    protected $name = '';
+    protected string $name = '';
 
     /**
      * Form input value.
      *
      * @var string
      */
-    protected $value = '';
+    protected string $value = '';
 
     /**
      * Constructor.

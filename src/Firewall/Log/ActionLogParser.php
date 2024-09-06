@@ -20,9 +20,9 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Log;
+namespace WPShieldon\Firewall\Log;
 
-use Shieldon\Firewall\Log\ActionLogger as Logger;
+use WPShieldon\Firewall\Log\CustomActionLogger as Logger;
 
 use function date;
 use function round;
@@ -34,29 +34,29 @@ use function strtotime;
 final class ActionLogParser
 {
     // Log codes. Same as Shieldon action codes.
-    const LOG_BAN = 0;
-    const LOG_ALLOW = 1;
-    const LOG_TEMPORARILY_BAN = 2;
-    const LOG_UNBAN = 9;
+    public const LOG_BAN = 'LOG_BAN';
+    public const LOG_ALLOW = 'LOG_ALLOW';
+    public const LOG_TEMPORARILY_BAN = 'LOG_TEMPORARILY_BAN';
+    public const LOG_UNBAN = 'LOG_UNBAN';
     
-    const LOG_LIMIT = 3;
-    const LOG_PAGEVIEW = 11;
-    const LOG_BLACKLIST = 98;
-    const LOG_CAPTCHA = 99;
+    public const LOG_LIMIT = 'LOG_LIMIT';
+    public const LOG_PAGEVIEW = 'LOG_PAGEVIEW';
+    public const LOG_BLACKLIST = 'LOG_BLACKLIST';
+    public const LOG_CAPTCHA = 'LOG_CAPTCHA';
 
     /**
      * Statistic data fields.
      *
      * @var array
      */
-    protected $fields = [];
+    protected array $fields = [];
     
     /**
      * Period type of the statistic data.
      *
      * @var array
      */
-    protected $periods = [];
+    protected array $periods = [];
 
     /**
      * Data detail.
@@ -66,7 +66,7 @@ final class ActionLogParser
      *
      * @var array
      */
-    protected $periodDetail = [];
+    protected array $periodDetail = [];
 
     /**
      * IP Detail
@@ -76,21 +76,21 @@ final class ActionLogParser
      *
      * @var array
      */
-    protected $ipDetail = [];
+    protected array $ipDetail = [];
 
     /**
      * ActionLogger instance.
      *
-     * @var ActionLogger
+     * @var CustomActionLogger
      */
-    protected $logger;
+    protected CustomActionLogger $logger;
 
     /**
      * Period type.
      *
      * @var string
      */
-    protected $type = 'today';
+    protected string $type = 'today';
 
     /**
      * Constructer.
@@ -309,7 +309,7 @@ final class ActionLogParser
      *
      * @return array
      */
-    public function getPeriodData()
+    public function getPeriodData(): array
     {
         if (!empty($this->periodDetail[$this->type])) {
             return $this->periodDetail[$this->type];
@@ -322,7 +322,7 @@ final class ActionLogParser
      *
      * @return array
      */
-    public function getIpData()
+    public function getIpData(): array
     {
         if (!empty($this->ipDetail[$this->type])) {
             return $this->ipDetail[$this->type];
@@ -477,13 +477,13 @@ final class ActionLogParser
      *
      * @return void
      */
-    private function parse($log, $t, $k): void
+    private function parse(array $log, string $t, string $k): void
     {
-        $logActionCode = (int) $log['action_code'];
+        $logActionCode = $log['action_code'];
         $ip = $log['ip'];
         $sessionId = $log['session_id'];
 
-        $this->ipDetail[$t][$ip]['session_id'][$sessionId ] = 1;
+        $this->ipDetail[$t][$ip]['session_id'][$sessionId] = 1;
 
         if ($logActionCode === self::LOG_TEMPORARILY_BAN) {
             $this->periodDetail[$t][$k]['action_temp_ban_count']++;

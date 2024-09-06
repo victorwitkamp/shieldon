@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall;
+namespace WPShieldon\Firewall;
 
 /**
  * This is a very, very simple container.
@@ -33,7 +33,7 @@ class Container
      *
      * @var array
      */
-    private static $instances = [];
+    private static array $instances = [];
 
     /**
      * Find an entry of the container by its identifier and returns it.

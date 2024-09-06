@@ -20,17 +20,17 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Kernel;
+namespace WPShieldon\Firewall\Kernel;
 
 use Psr\Http\Message\ResponseInterface;
-use Shieldon\Firewall\Kernel\Enum;
-use Shieldon\Firewall\HttpFactory;
-use Shieldon\Firewall\Container;
+use WPShieldon\Firewall\Kernel\Enum;
+use WPShieldon\Firewall\HttpFactory;
+use WPShieldon\Firewall\Container;
 use Shieldon\Event\Event;
-use function Shieldon\Firewall\get_response;
-use function Shieldon\Firewall\get_request;
-use function Shieldon\Firewall\get_session_instance;
-use function Shieldon\Firewall\__;
+use function WPShieldon\Firewall\get_response;
+use function WPShieldon\Firewall\get_request;
+use function WPShieldon\Firewall\get_session_instance;
+use function WPShieldon\Firewall\__;
 use InvalidArgumentException;
 use RuntimeException;
 use function array_keys;
@@ -62,14 +62,14 @@ trait TemplateTrait
      *
      * @var string
      */
-    protected $templateDirectory = '';
+    protected string $templateDirectory = '';
 
     /**
      * Custom dialog UI settings.
      *
      * @var array
      */
-    protected $dialog = [];
+    protected array $dialog = [];
 
     /**
      * Get current visior's path.
@@ -97,6 +97,7 @@ trait TemplateTrait
      */
     public function respond(): ResponseInterface
     {
+        $this->psrlogger->warning('TemplateTrait respond - this->result: ' . $this->result);
         $response = get_response();
 
         $httpStatusCodes = [
@@ -116,6 +117,12 @@ trait TemplateTrait
             ],
         ];
 
+        if ($this->result === Enum::ACTION_TEMPORARILY_DENY) {
+            $this->psrlogger->warning('THIS SHOULD NOT HAPPEN');
+            Throw new \RuntimeException;
+            $this->result = Enum::RESPONSE_TEMPORARILY_DENY;
+        }
+
         // Nothing happened. Return.
         if (empty($httpStatusCodes[$this->result])) {
             return $response;
@@ -127,12 +134,19 @@ trait TemplateTrait
         $viewPath = $this->getTemplate($type);
 
         // The language of output UI. It is used on views.
-        $langCode = get_session_instance()->get('shieldon_ui_lang') ?? 'en';
+        // $langCode = get_session_instance()->get('shieldon_ui_lang') ?? 'en';
 
         $onlineinfo = [];
         $onlineinfo['queue'] = $this->sessionStatus['queue'];
         $onlineinfo['count'] = $this->sessionStatus['count'];
-        $onlineinfo['period'] = $this->sessionLimit['period'];
+        $onlineinfo['order'] = $this->sessionStatus['order'];
+        $onlineinfo['limitperiod'] = $this->sessionLimit['period'];
+        $onlineinfo['limitcount'] = $this->sessionLimit['count'];
+
+        $dialoguserinfo = [];
+        $dialoguserinfo['ip'] = $this->ip;
+        $dialoguserinfo['rdns'] = $this->rdns;
+        $dialoguserinfo['user_agent'] = get_request()->getHeaderLine('user-agent');
 
         $dialoguserinfo = [];
         $dialoguserinfo['ip'] = $this->ip;
@@ -147,14 +161,14 @@ trait TemplateTrait
         $ui = $this->confirmUiSettings();
         $uiInfo = $this->confirmUiInfoSettings($statusCode);
 
-        $css = include $this->getTemplate('css/default');
+        // $css = include $this->getTemplate('css/default');
 
         /**
          * Hook - dialog_output
          */
         Event::doDispatch('dialog_output');
 
-        $performanceReport = $this->displayPerformanceReport();
+        // $performanceReport = $this->displayPerformanceReport();
 
         ob_start();
         include $viewPath;
@@ -162,7 +176,7 @@ trait TemplateTrait
         ob_end_clean();
 
         // Remove unused variable notices generated from PHP intelephense.
-        unset($css, $ui, $form, $captchas, $langCode, $performanceReport, $uiInfo);
+        unset($ui, $form, $captchas, $uiInfo);
 
         $stream = HttpFactory::createStream();
         $stream->write($output);
@@ -231,6 +245,7 @@ trait TemplateTrait
      */
     protected function getTemplate(string $type): string
     {
+        $this->psrlogger->warning('getTemplate: ' . $type);
         $directory = Enum::KERNEL_DIR . '/../../templates/frontend';
 
         if (!empty($this->templateDirectory)) {
@@ -250,60 +265,6 @@ trait TemplateTrait
 
         return $path;
     }
-
-    /**
-     * Count the performance statistics.
-     *
-     * @return array
-     */
-    protected function getPerformanceStats(): array
-    {
-        $statStart = Container::get('shieldon_start');
-        $statEnd = Container::get('shieldon_end');
-
-        $startTimeArr = explode(' ', $statStart['time']);
-        $endTimeArr = explode(' ', $statStart['time']);
-
-        $timeDifference = ($endTimeArr[1] - $startTimeArr[1]) + ($endTimeArr[0] - $startTimeArr[0]);
-        $memoryDifference = round(($statEnd['memory'] - $statStart['memory']) / 1024, 2); // KB
-
-        $data = [
-            'time' => $timeDifference,
-            'memory' => $memoryDifference,
-        ];
-
-        return $data;
-    }
-
-    /**
-     * Display the HTML of the performance report.
-     *
-     * @return string
-     */
-    protected function displayPerformanceReport(): string
-    {
-        if (!Container::get('shieldon_start')) {
-            return '';
-        }
-
-        $html = '';
-
-        $performance = $this->getPerformanceStats();
-
-        if ($performance['time'] < 0.001) {
-            $performance['time'] = 'fewer than 0.001';
-        }
-
-        if (isset($performance['time'])) {
-            $html .= '<div class="performance-report">';
-            $html .= 'Memory consumed: <strong>' . $performance['memory'] . '</strong> KB / ';
-            $html .= 'Execution:  <strong>' . $performance['time'] . ' </strong> seconds.';
-            $html .= '</div>';
-        }
-
-        return $html;
-    }
-
 
     /**
      * Confirm the UI settings.

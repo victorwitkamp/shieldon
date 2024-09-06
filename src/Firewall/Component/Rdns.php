@@ -20,11 +20,12 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Component;
+namespace WPShieldon\Firewall\Component;
 
-use Shieldon\Firewall\Component\ComponentProvider;
-use Shieldon\Firewall\Component\DeniedTrait;
-use Shieldon\Firewall\IpTrait;
+use WPShieldon\Firewall\Component\ComponentProvider;
+use WPShieldon\Firewall\Component\DeniedTrait;
+use WPShieldon\Firewall\IpTrait;
+use WPShieldon\Firewall\Kernel\Enum;
 
 use function gethostbyname;
 use function implode;
@@ -66,7 +67,7 @@ class Rdns extends ComponentProvider
     /**
      * Constant
      */
-    const STATUS_CODE = 82;
+    public const STATUS_CODE = Enum::REASON_COMPONENT_RDNS_DENIED;
 
     /**
      * Constructor.
@@ -88,6 +89,7 @@ class Rdns extends ComponentProvider
     {
         if (!empty($this->deniedList)) {
             if (preg_match('/(' . implode('|', $this->deniedList). ')/i', $this->rdns)) {
+                error_log( 'Shieldon - Rdns - isDenied - true' );
                 return true;
             }
         }
@@ -95,11 +97,13 @@ class Rdns extends ComponentProvider
         if ($this->strictMode) {
             // If strict mode is on, this value can not be empty.
             if (empty($this->rdns)) {
+                error_log( 'Shieldon - Rdns - isDenied - true' );
                 return true;
             }
 
             // If the RDNS is an IP adress, not a FQDN.
             if ($this->ip === $this->rdns) {
+                error_log( 'Shieldon - Rdns - isDenied - true' );
                 return true;
             }
 
@@ -108,6 +112,7 @@ class Rdns extends ComponentProvider
 
             // If the IP is different as hostname's resolved IP.
             if ($ip !== $this->ip) {
+                error_log( 'Shieldon - Rdns - isDenied - true' );
                 return true;
             }
         }
@@ -118,9 +123,9 @@ class Rdns extends ComponentProvider
     /**
      * Unique deny status code.
      *
-     * @return int
+     * @return string
      */
-    public function getDenyStatusCode(): int
+    public function getDenyStatusCode(): string
     {
         return self::STATUS_CODE;
     }

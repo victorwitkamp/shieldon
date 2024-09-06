@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Driver;
+namespace WPShieldon\Firewall\Driver;
 
 /**
  * Interface for Data drivers.

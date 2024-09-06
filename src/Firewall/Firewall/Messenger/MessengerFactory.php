@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Firewall\Messenger;
+namespace WPShieldon\Firewall\Firewall\Messenger;
 
 use Shieldon\Messenger\Messenger\MessengerInterface;
 use function array_map;
@@ -43,7 +43,7 @@ class MessengerFactory
      */
     public static function getInstance(string $messenger, array $setting): MessengerInterface
     {
-        $className = '\Shieldon\Firewall\Firewall\Messenger\Item' . self::getCamelCase($messenger);
+        $className = '\WPShieldon\Firewall\Firewall\Messenger\Item' . self::getCamelCase($messenger);
 
         return $className::get($setting);
     }
@@ -75,7 +75,7 @@ class MessengerFactory
     public static function getCamelCase(string $string = ''): string
     {
         $str = explode('_', $string);
-        $str = implode(
+        return implode(
             '',
             array_map(
                 function ($word) {
@@ -84,6 +84,5 @@ class MessengerFactory
                 $str
             )
         );
-        return $str;
     }
 }

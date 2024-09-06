@@ -20,12 +20,12 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Kernel;
+namespace WPShieldon\Firewall\Kernel;
 
-use Shieldon\Firewall\Kernel\Enum;
-use function Shieldon\Firewall\get_request;
-use function Shieldon\Firewall\get_session_instance;
-use function Shieldon\Firewall\unset_superglobal;
+use WPShieldon\Firewall\Kernel\Enum;
+use function WPShieldon\Firewall\get_request;
+use function WPShieldon\Firewall\get_session_instance;
+use function WPShieldon\Firewall\unset_superglobal;
 use function time;
 use function array_keys;
 
@@ -48,7 +48,7 @@ trait FilterTrait
      *
      * @var array
      */
-    protected $filterStatus = [
+    protected array $filterStatus = [
         /**
          * Check how many pageviews an user made in a short period time.
          * For example, limit an user can only view 30 pages in 60 minutes.
@@ -85,7 +85,7 @@ trait FilterTrait
      *
      * @var array
      */
-    protected $filterResetStatus = [
+    protected array $filterResetStatus = [
         's' => false, // second.
         'm' => false, // minute.
         'h' => false, // hour.
@@ -95,13 +95,13 @@ trait FilterTrait
     /**
      * Start an action for this IP address, allow or deny, and give a reason for it.
      *
-     * @param int    $actionCode The action code. - 0: deny, 1: allow, 9: unban.
+     * @param string $actionCode The action code. - 0: deny, 1: allow, 9: unban.
      * @param string $reasonCode The response code.
      * @param string $assignIp   The IP address.
      *
      * @return void
      */
-    abstract public function action(int $actionCode, int $reasonCode, string $assignIp = ''): void;
+    abstract public function action(string $actionCode, string $reasonCode, string $assignIp = ''): void;
 
     /**
      * Set the filters.
@@ -161,9 +161,9 @@ trait FilterTrait
     /**
      * Detect and analyze an user's behavior.
      *
-     * @return int The response code.
+     * @return string The response code.
      */
-    protected function filter(): int
+    protected function filter(): string
     {
         $now = time();
         $isFlagged = false;
@@ -207,6 +207,7 @@ trait FilterTrait
                 $isReject = $filterReturnData['is_reject'];
 
                 if ($isReject) {
+                    $this->psrlogger->warning('Shieldon - Filter: ' . $filter . ' - Response: ' . Enum::RESPONSE_TEMPORARILY_DENY);
                     return Enum::RESPONSE_TEMPORARILY_DENY;
                 }
             }
@@ -252,7 +253,7 @@ trait FilterTrait
      *
      * @return void
      */
-    protected function InitializeFirstTimeFilter($logData): void
+    protected function InitializeFirstTimeFilter(array $logData): void
     {
         $now = time();
 
@@ -373,11 +374,11 @@ trait FilterTrait
 
             $c = $this->properties['cookie_name'];
 
-            $jsCookie = get_request()->getCookieParams()[$c] ?? 0;
+            (int)$jsCookie = get_request()->getCookieParams()[$c] ?? 0;
 
             // Checking if a cookie is created by JavaScript.
             if (!empty($jsCookie)) {
-                if ($jsCookie == '1') {
+                if ($jsCookie === 1) {
                     $logData['pageviews_cookie']++;
                 } else {
                     // Flag it if the value is not 1.

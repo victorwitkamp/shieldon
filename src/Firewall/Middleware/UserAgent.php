@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Middleware;
+namespace WPShieldon\Firewall\Middleware;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -40,14 +40,14 @@ class UserAgent implements MiddlewareInterface
      *
      * @var int
      */
-    const HTTP_STATUS_CODE = 400;
+    public const HTTP_STATUS_CODE = 400;
 
     /**
      * The URL list that you want to protect.
      *
      * @var array
      */
-    protected $deniedList = [
+    protected array $deniedList = [
 
         // Backlink crawlers
         'Ahrefs',     // http://ahrefs.com/robot/

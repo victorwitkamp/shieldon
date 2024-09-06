@@ -20,11 +20,11 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Firewall\Messenger;
+namespace WPShieldon\Firewall\Firewall\Messenger;
 
 use Shieldon\Messenger\Messenger\MessengerInterface;
 use Shieldon\Messenger\Mailgun;
-use function Shieldon\Firewall\__;
+use function WPShieldon\Firewall\__;
 
 /**
  * Get an item of messenger. It is Mailgun.

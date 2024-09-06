@@ -20,9 +20,9 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Driver;
+namespace WPShieldon\Firewall\Driver;
 
-use Shieldon\Firewall\Driver\DriverInterface;
+use WPShieldon\Firewall\Driver\DriverInterface;
 
 /**
  * Abstract Driver.

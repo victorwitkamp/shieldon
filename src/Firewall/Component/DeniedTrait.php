@@ -20,12 +20,10 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Component;
+namespace WPShieldon\Firewall\Component;
 
 use function array_keys;
-use function array_push;
 use function in_array;
-use function strpos;
 
 /*
  * Denied trait.
@@ -53,7 +51,7 @@ trait DeniedTrait
      *
      * @var array
      */
-    protected $deniedList = [];
+    protected array $deniedList = [];
 
     /**
      * Add items to the blacklist pool.
@@ -79,8 +77,8 @@ trait DeniedTrait
     {
         if (!empty($key)) {
             $this->deniedList[$key] = $value;
-        } elseif (!in_array($value, $this->deniedList)) {
-            array_push($this->deniedList, $value);
+        } elseif (in_array($value, $this->deniedList)) {
+            $this->deniedList[] = $value;
         }
     }
 
@@ -111,7 +109,7 @@ trait DeniedTrait
      *
      * @param string $key The key of the data.
      *
-     * @return string
+     * @return void
      */
     public function removeDeniedItem(string $key): void
     {
@@ -151,7 +149,7 @@ trait DeniedTrait
     {
         $temp = [];
         foreach ($this->deniedList as $keyName => $value) {
-            if (strpos($keyName, $key) === 0) {
+            if (str_starts_with($keyName, $key)) {
                 $temp[$keyName] = $value;
             }
         }
@@ -168,13 +166,13 @@ trait DeniedTrait
     public function removeDenyWithPrefix(string $key): void
     {
         foreach (array_keys($this->deniedList) as $keyName) {
-            if (strpos($keyName, $key) === 0) {
+            if (str_starts_with($keyName, $key)) {
                 unset($this->deniedList[$keyName]);
             }
         }
     }
 
-    // @codeCoverageIgnoreStart
+
 
     /**
      * Is denied?
@@ -187,5 +185,5 @@ trait DeniedTrait
         return false;
     }
 
-    // @codeCoverageIgnoreEnd
+
 }

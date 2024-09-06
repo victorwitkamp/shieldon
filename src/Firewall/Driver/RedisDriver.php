@@ -20,10 +20,11 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Driver;
+namespace WPShieldon\Firewall\Driver;
 
-use Shieldon\Firewall\Driver\DriverProvider;
+use WPShieldon\Firewall\Driver\DriverProvider;
 use Redis;
+use function in_array;
 use function is_bool;
 use function json_decode;
 use function json_encode;
@@ -39,7 +40,7 @@ class RedisDriver extends DriverProvider
      *
      * @var object|null
      */
-    protected $redis;
+    protected Redis $redis;
 
     /**
      * Constructor.
@@ -89,7 +90,7 @@ class RedisDriver extends DriverProvider
      *
      * @param string $type The type of the data table.
      *
-     * @return bool
+     * @return array
      */
     protected function doFetchAll(string $type = 'filter'): array
     {
@@ -167,13 +168,13 @@ class RedisDriver extends DriverProvider
 
         // This function took a single argument and returned TRUE or FALSE in phpredis versions < 4.0.0.
 
-        // @codeCoverageIgnoreStart
+
         if (is_bool($isExist)) {
             return $isExist;
         }
 
         return $isExist > 0;
-        // @codeCoverageIgnoreEnd
+
     }
 
     /**
@@ -204,10 +205,10 @@ class RedisDriver extends DriverProvider
                 $logData = $data;
                 break;
 
-            // @codeCoverageIgnoreStart
+
             default:
                 return false;
-            // @codeCoverageIgnoreEnd
+
         }
 
         if ($expire > 0) {

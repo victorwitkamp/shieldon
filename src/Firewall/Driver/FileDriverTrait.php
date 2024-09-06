@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Driver;
+namespace WPShieldon\Firewall\Driver;
 
 use RuntimeException;
 use function is_dir;
@@ -29,7 +29,7 @@ use function str_replace;
 use function umask;
 
 /**
- * SQL Driver Trait
+ * File Driver Trait
  */
 trait FileDriverTrait
 {

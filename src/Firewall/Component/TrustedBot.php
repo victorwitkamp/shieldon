@@ -20,14 +20,15 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Component;
+namespace WPShieldon\Firewall\Component;
 
-use Shieldon\Firewall\Component\ComponentProvider;
-use Shieldon\Firewall\Component\AllowedTrait;
-use Shieldon\Firewall\Component\DeniedTrait;
-use Shieldon\Firewall\IpTrait;
+use WPShieldon\Firewall\Component\ComponentProvider;
+use WPShieldon\Firewall\Component\AllowedTrait;
+use WPShieldon\Firewall\Component\DeniedTrait;
+use WPShieldon\Firewall\IpTrait;
+use WPShieldon\Firewall\Kernel\Enum;
 
-use function Shieldon\Firewall\get_request;
+use function WPShieldon\Firewall\get_request;
 
 use function array_column;
 use function array_unique;
@@ -89,21 +90,21 @@ class TrustedBot extends ComponentProvider
     /**
      * Constant
      */
-    const STATUS_CODE = 85;
+    public const STATUS_CODE = Enum::REASON_COMPONENT_TRUSTED_ROBOT_DENIED;
 
     /**
      * Robot's user-agent text.
      *
      * @var string
      */
-    private $userAgent = '';
+    private string $userAgent;
 
     /**
      * Is the current access a fake robot?
      *
      * @var bool
      */
-    private $isFake = false;
+    private bool $isFake = false;
 
     /**
      * Constructor.
@@ -333,9 +334,9 @@ class TrustedBot extends ComponentProvider
     /**
      * Unique deny status code.
      *
-     * @return int
+     * @return string
      */
-    public function getDenyStatusCode(): int
+    public function getDenyStatusCode(): string
     {
         return self::STATUS_CODE;
     }

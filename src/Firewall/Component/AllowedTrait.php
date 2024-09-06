@@ -20,12 +20,10 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Component;
+namespace WPShieldon\Firewall\Component;
 
 use function array_keys;
-use function array_push;
 use function in_array;
-use function strpos;
 
 /*
  * Allowed trait.
@@ -53,7 +51,7 @@ trait AllowedTrait
      *
      * @var array
      */
-    protected $allowedList = [];
+    protected array $allowedList = [];
 
     /**
      * Add items to the whitelist pool.
@@ -80,7 +78,7 @@ trait AllowedTrait
         if (!empty($key)) {
             $this->allowedList[$key] = $value;
         } elseif (!in_array($value, $this->allowedList)) {
-            array_push($this->allowedList, $value);
+            $this->allowedList[] = $value;
         }
     }
 
@@ -149,7 +147,7 @@ trait AllowedTrait
     {
         $temp = [];
         foreach ($this->allowedList as $keyName => $value) {
-            if (strpos($keyName, $key) === 0) {
+            if (str_starts_with($keyName, $key)) {
                 $temp[$keyName] = $value;
             }
         }
@@ -166,7 +164,7 @@ trait AllowedTrait
     public function removeAllowByPrefix(string $key): void
     {
         foreach (array_keys($this->allowedList) as $keyName) {
-            if (strpos($keyName, $key) === 0) {
+            if (str_starts_with($keyName, $key)) {
                 unset($this->allowedList[$keyName]);
             }
         }

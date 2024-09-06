@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Middleware;
+namespace WPShieldon\Firewall\Middleware;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -31,7 +31,6 @@ use InvalidArgumentException;
 use function array_column;
 use function count;
 use function password_verify;
-use function strpos;
 
 /**
  * A PSR-15 middleware that provides WWW-Authenticate protection.
@@ -43,14 +42,14 @@ class HttpAuthentication implements MiddlewareInterface
      *
      * @var int
      */
-    const HTTP_STATUS_CODE = 401;
+    public const HTTP_STATUS_CODE = 401;
 
     /**
      * The URL list that you want to protect.
      *
      * @var array
      */
-    protected $list = [
+    private array $list = [
         [
             // Begin-with URL
             'url' => '/wp-amdin',
@@ -68,7 +67,7 @@ class HttpAuthentication implements MiddlewareInterface
      *
      * @var string
      */
-    protected $realm;
+    private string $realm;
 
     /**
      * Constructor.
@@ -99,7 +98,7 @@ class HttpAuthentication implements MiddlewareInterface
 
         foreach ($this->list as $urlInfo) {
             // If we have set the protection for current URL.
-            if (0 === strpos($currentUrl, $urlInfo['url'])) {
+            if (str_starts_with($currentUrl, $urlInfo['url'])) {
                 // Prompt a window to ask for username and password.
                 if (!isset($serverParams['PHP_AUTH_USER']) ||
                     !isset($serverParams['PHP_AUTH_PW'])

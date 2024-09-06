@@ -20,9 +20,9 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall;
+namespace WPShieldon\Firewall;
 
-use Shieldon\Firewall\Session;
+use WPShieldon\Firewall\Session;
 use Shieldon\Psr17\ResponseFactory;
 use Shieldon\Psr17\ServerRequestFactory;
 use Shieldon\Psr17\StreamFactory;

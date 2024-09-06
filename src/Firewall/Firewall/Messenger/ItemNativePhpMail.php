@@ -20,11 +20,11 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Firewall\Messenger;
+namespace WPShieldon\Firewall\Firewall\Messenger;
 
 use Shieldon\Messenger\Messenger\MessengerInterface;
 use Shieldon\Messenger\Mail;
-use function Shieldon\Firewall\__;
+use function WPShieldon\Firewall\__;
 
 /**
  * The get for PHP native mail.

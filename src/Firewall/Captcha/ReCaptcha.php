@@ -20,12 +20,12 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Captcha;
+namespace WPShieldon\Firewall\Captcha;
 
-use Shieldon\Firewall\Captcha\CaptchaProvider;
+use WPShieldon\Firewall\Captcha\CaptchaProvider;
 
-use function Shieldon\Firewall\get_request;
-use function Shieldon\Firewall\unset_superglobal;
+use function WPShieldon\Firewall\get_request;
+use function WPShieldon\Firewall\unset_superglobal;
 use CurlHandle; // PHP 8
 use function curl_error;
 use function curl_exec;
@@ -44,35 +44,35 @@ class ReCaptcha extends CaptchaProvider
      *
      * @var string
      */
-    protected $key = '';
+    protected string $key = '';
 
     /**
      * The secret key.
      *
      * @var string
      */
-    protected $secret = '';
+    protected string $secret = '';
 
     /**
      * The version.
      *
      * @var string
      */
-    protected $version = 'v2';
+    protected string $version = 'v2';
 
     /**
      * The language code of the UI.
      *
      * @var string
      */
-    protected $lang = 'en';
+    protected string $lang = 'en';
 
     /**
      * The URL of Google ReCaptcha API.
      *
      * @var string
      */
-    protected $googleServiceUrl = 'https://www.google.com/recaptcha/api/siteverify';
+    protected string $googleServiceUrl = 'https://www.google.com/recaptcha/api/siteverify';
 
     /**
      * Constructor.
@@ -117,22 +117,22 @@ class ReCaptcha extends CaptchaProvider
 
         $ch = curl_init();
 
-        if (version_compare(phpversion(), '8.0.0', '>=')) {
+        if (PHP_VERSION_ID >= 80000) {
             if (!$ch instanceof CurlHandle) {
-                // @codeCoverageIgnoreStart
+
                 return false;
-                // @codeCoverageIgnoreEnd
-            }
-        } else {
-            if (!is_resource($ch)) {
-                // @codeCoverageIgnoreStart
-                return false;
-                // @codeCoverageIgnoreEnd
+
             }
         }
+        //      if (!is_resource($ch)) {
+        //          error_log("Shieldon - CH is not resource");
+        //          return false;
+        //      } else {
+        //          error_log("Shieldon - CH is resource");
+        //      }
 
         curl_setopt($ch, CURLOPT_URL, $this->googleServiceUrl);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Expect:'));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Expect:']);
         curl_setopt($ch, CURLOPT_POST, 2);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
@@ -141,15 +141,15 @@ class ReCaptcha extends CaptchaProvider
 
         $ret = curl_exec($ch);
 
-        // @codeCoverageIgnoreStart
+
         if (curl_errno($ch)) {
             echo 'error:' . curl_error($ch);
         }
-        // @codeCoverageIgnoreEnd
+
 
         if (isset($ret) && is_string($ret)) {
             $tmp = json_decode($ret);
-            if ($tmp->success == true) {
+            if ($tmp->success === true) {
                 $flag = true;
             }
         }

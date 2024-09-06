@@ -20,14 +20,15 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall;
+namespace WPShieldon\Firewall;
 
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Shieldon\Firewall\Container;
-use Shieldon\Firewall\Driver\FileDriver;
-use Shieldon\Firewall\HttpFactory;
-use Shieldon\Firewall\Session;
+use WPShieldon\Firewall\Container;
+use WPShieldon\Firewall\Driver\FileDriver;
+use WPShieldon\Firewall\HttpFactory;
+use WPShieldon\Firewall\Session;
+use function define;
 use function explode;
 use function file_exists;
 use function file_put_contents;
@@ -44,6 +45,7 @@ use function round;
 use function shell_exec;
 use function str_repeat;
 use function str_replace;
+use function strlen;
 use function stripos;
 use function strtoupper;
 use function substr;
@@ -103,43 +105,11 @@ class Helpers
  *
  * @return string
  */
-function __(): string
+function __(string $filename, string $langcode, $placeholder = '', array $replacement = []): string
 {
-    /**
-     * Load locale string from i18n files and store them into this array
-     * for further use.
-     *
-     * @var array
-     */
-    static $i18n;
 
-    /**
-     * Check the file exists for not.
-     *
-     * @var array
-     */
-    static $fileChecked;
-
-    $num = func_num_args();
-
-    $filename    = func_get_arg(0); // required.
-    $langcode    = func_get_arg(1); // required.
-    $placeholder = ($num > 2) ? func_get_arg(2) : '';
-    $replacement = ($num > 3) ? func_get_arg(3) : [];
-    $lang        = get_user_lang();
-
-    if (empty($i18n[$filename]) && empty($fileChecked[$filename])) {
-        $fileChecked[$filename] = true;
-        $i18n[$filename] = include_i18n_file($lang, $filename);
-    }
-
-    // If we don't get the string from the localization file, use placeholder
-    // instead.
     $resultString = $placeholder;
 
-    if (!empty($i18n[$filename][$langcode])) {
-        $resultString = $i18n[$filename][$langcode];
-    }
 
     if (is_array($replacement)) {
         /**
@@ -338,10 +308,10 @@ function get_default_properties(): array
         'cookie_domain'       => '',
         'cookie_value'        => '1',
         'display_online_info' => true,
-        'display_user_info'   => false,
-        'display_http_code'   => false,
-        'display_reason_code' => false,
-        'display_reason_text' => false,
+        'display_user_info'   => true,
+        'display_http_code'   => true,
+        'display_reason_code' => true,
+        'display_reason_text' => true,
 
         /**
          * If you set this option enabled, Shieldon will record every CAPTCHA fails
@@ -353,7 +323,7 @@ function get_default_properties(): array
          * system firewall and say goodbye to them forever.
          */
         'deny_attempt_enable' => [
-            'data_circle'     => false,
+            'data_circle'     => true,
             'system_firewall' => false,
         ],
 
@@ -583,8 +553,15 @@ function unset_superglobal($name, string $type): void
         return;
     }
 
-    $method = '\Shieldon\Firewall\unset_global_' . $type;
-    $method($name, $type);
+    if ( $type === 'get' ) {
+        unset_global_get( $name );
+    } elseif ( $type === 'post' ) {
+        unset_global_post( $name );
+    } elseif ( $type === 'cookie' ) {
+        unset_global_cookie( $name );
+    } elseif ( $type === 'session' ) {
+        unset_global_session( $name );
+    }
 }
 
 /*
@@ -632,7 +609,7 @@ function set_ip(string $ip)
  *
  * @return string
  */
-function get_microtimestamp()
+function get_microtimestamp(): string
 {
     $microtimestamp = explode(' ', microtime());
     $microtimestamp = $microtimestamp[1] . str_replace('0.', '', $microtimestamp[0]);

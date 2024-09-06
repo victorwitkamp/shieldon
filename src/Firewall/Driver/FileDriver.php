@@ -20,16 +20,18 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Driver;
+namespace WPShieldon\Firewall\Driver;
 
-use Shieldon\Firewall\Driver\DriverProvider;
-use Shieldon\Firewall\Driver\FileDriverTrait;
+use WPShieldon\Firewall\Driver\DriverProvider;
+use WPShieldon\Firewall\Driver\FileDriverTrait;
+use FilesystemIterator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use function file_exists;
 use function file_get_contents;
 use function file_put_contents;
 use function in_array;
+use function is_array;
 use function is_dir;
 use function json_decode;
 use function ksort;
@@ -49,7 +51,7 @@ class FileDriver extends DriverProvider
      *
      * @var string
      */
-    protected $directory = '/tmp/';
+    protected string $directory = '/tmp/';
 
 
     /**
@@ -57,7 +59,7 @@ class FileDriver extends DriverProvider
      *
      * @var string
      */
-    protected $extension = 'json';
+    protected string $extension = 'json';
 
     /**
      * Constructor.
@@ -111,7 +113,7 @@ class FileDriver extends DriverProvider
         $dir = $this->getDirectory($type);
 
         if (is_dir($dir)) {
-            $it = new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS);
+            $it = new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS);
             $files = new RecursiveIteratorIterator($it, RecursiveIteratorIterator::CHILD_FIRST);
 
             foreach ($files as $file) {
@@ -227,7 +229,7 @@ class FileDriver extends DriverProvider
         // Update file time.
         touch($this->getFilename($ip, $type), time());
 
-        return ($result > 0) ? true : false;
+        return $result > 0;
     }
 
     /**
@@ -266,14 +268,14 @@ class FileDriver extends DriverProvider
         // Remove them recursively.
         foreach ($tables as $dir) {
             if (file_exists($dir)) {
-                $it = new RecursiveDirectoryIterator($dir, RecursiveDirectoryIterator::SKIP_DOTS);
+                $it = new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS);
                 $files = new RecursiveIteratorIterator($it, RecursiveIteratorIterator::CHILD_FIRST);
     
                 foreach ($files as $file) {
                     if ($file->isDir()) {
-                        // @codeCoverageIgnoreStart
+
                         rmdir($file->getRealPath());
-                        // @codeCoverageIgnoreEnd
+
                     } else {
                         unlink($file->getRealPath());
                     }
@@ -292,9 +294,9 @@ class FileDriver extends DriverProvider
     /**
      * Remove a Shieldon log file.
      * Removing a log file works as the same as removing a SQL table's row.
-     *
+     * 
      * @param string $logFilePath The absolute path of the log file.
-     *
+     * 
      * @return bool
      */
     private function remove(string $logFilePath): bool

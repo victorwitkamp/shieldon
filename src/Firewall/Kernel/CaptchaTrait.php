@@ -20,10 +20,11 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Kernel;
+namespace WPShieldon\Firewall\Kernel;
 
-use Shieldon\Firewall\Kernel\Enum;
-use Shieldon\Firewall\Captcha\CaptchaInterface;
+use WPShieldon\Firewall\Kernel\Enum;
+use WPShieldon\Firewall\Captcha\CaptchaInterface;
+use function get_class;
 
 /*
  * Captcha Trait is loaded in Kernel instance only.
@@ -41,11 +42,11 @@ trait CaptchaTrait
 
     /**
      * Container for captcha addons.
-     * The collection of \Shieldon\Firewall\Captcha\CaptchaInterface
+     * The collection of \WPShieldon\Firewall\Captcha\CaptchaInterface
      *
      * @var array
      */
-    public $captcha = [];
+    public array $captcha = [];
 
     /**
      * Get a class name without namespace string.
@@ -59,21 +60,21 @@ trait CaptchaTrait
     /**
      * Deal with online sessions.
      *
-     * @param int $statusCode The response code.
+     * @param string $statusCode The response code.
      *
-     * @return int The response code.
+     * @return string The response code.
      */
-    abstract protected function sessionHandler($statusCode): int;
+    abstract protected function sessionHandler(string $statusCode): string;
 
     /**
      * Save and return the result identifier.
      * This method is for passing value from traits.
      *
-     * @param int $resultCode The result identifier.
+     * @param string $resultCode The result identifier.
      *
-     * @return int
+     * @return string
      */
-    abstract protected function setResultCode(int $resultCode): int;
+    abstract protected function setResultCode(string $resultCode): string;
 
     /**
      * Set a captcha.
@@ -97,7 +98,10 @@ trait CaptchaTrait
     {
         foreach ($this->captcha as $captcha) {
             if (!$captcha->response()) {
+                $this->psrlogger->warning('Shieldon - CaptchaTrait - CaptchaResponse - ' . get_class($captcha) . ' - return false');
                 return false;
+            } else {
+                $this->psrlogger->warning('Shieldon - CaptchaTrait - CaptchaResponse - ' . get_class($captcha) . ' - return true');
             }
         }
 

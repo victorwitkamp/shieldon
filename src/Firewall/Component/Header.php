@@ -20,12 +20,16 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Component;
+namespace WPShieldon\Firewall\Component;
 
-use Shieldon\Firewall\Component\ComponentProvider;
-use Shieldon\Firewall\Component\DeniedTrait;
-use Shieldon\Firewall\IpTrait;
-use function Shieldon\Firewall\get_request;
+use Monolog\Handler\StreamHandler;
+use Monolog\Level;
+use Monolog\Logger;
+use WPShieldon\Firewall\Component\ComponentProvider;
+use WPShieldon\Firewall\Component\DeniedTrait;
+use WPShieldon\Firewall\IpTrait;
+use function WPShieldon\Firewall\get_request;
+use WPShieldon\Firewall\Kernel\Enum;
 
 /**
  * Header component.
@@ -63,14 +67,16 @@ class Header extends ComponentProvider
     /**
      * Constant
      */
-    const STATUS_CODE = 83;
+    public const STATUS_CODE = Enum::REASON_COMPONENT_HEADER_DENIED;
+
+    public Logger $psrlogger;
 
     /**
      * Very common requests from normal users.
      *
      * @var array
      */
-    protected $commonHeaderFileds = [
+    protected array $commonHeaderFields = [
         'Accept',
         'Accept-Language',
         'Accept-Encoding',
@@ -81,14 +87,17 @@ class Header extends ComponentProvider
      *
      * @var array
      */
-    protected $headers = [];
+    protected array $headers = [];
 
     /**
      * Header component constructor.
      */
-    public function __construct()
+    public function __construct(bool $strictMode = true)
     {
         $this->headers = get_request()->getHeaders();
+        $this->psrlogger = new Logger('HeaderLogger');
+        $this->psrlogger->pushHandler(new StreamHandler(SHIELDON_PLUGIN_DIR . '/logs/Shieldon_Header.log', Level::Warning));
+        $this->strictMode = $strictMode;
         $this->deniedList = [];
     }
 
@@ -99,6 +108,7 @@ class Header extends ComponentProvider
      */
     public function isDenied(): bool
     {
+        $this->psrlogger->warning('isDenied start (for IP: ' . $this->getIp() . ' - url: ' . $_SERVER['REQUEST_URI'] . ')');
         if (!empty($this->deniedList)) {
             $intersect = array_intersect_key($this->deniedList, $this->headers);
 
@@ -107,20 +117,23 @@ class Header extends ComponentProvider
 
                 // When found a header field contains a prohibited string.
                 if (stripos($requestHeader, $headerValue) !== false) {
+                    $this->psrlogger->warning('isDenied true prohibited string: ' . $headerValue . ' (for IP: ' . $this->getIp() . ' - url: ' . $_SERVER['REQUEST_URI'] . ')');
                     return true;
                 }
             }
         }
 
         if ($this->strictMode) {
-            foreach ($this->commonHeaderFileds as $fieldName) {
+            foreach ($this->commonHeaderFields as $fieldName) {
                 // If strict mode is on, this value must be found.
                 if (!isset($this->headers[$fieldName]) && empty($this->headers['referer'])) {
+                    $this->psrlogger->warning('isDenied(strict) true did not find fieldName: ' . $fieldName . ' or empty referer (for IP: ' . $this->getIp() . ' - url: ' . $_SERVER['REQUEST_URI'] . ')');
                     return true;
                 }
             }
         }
 
+        $this->psrlogger->warning('isDenied false (for IP: ' . $this->getIp() . ' - url: ' . $_SERVER['REQUEST_URI'] . ')');
         return false;
     }
 
@@ -137,9 +150,9 @@ class Header extends ComponentProvider
     /**
      * Unique deny status code.
      *
-     * @return int
+     * @return string
      */
-    public function getDenyStatusCode(): int
+    public function getDenyStatusCode(): string
     {
         return self::STATUS_CODE;
     }

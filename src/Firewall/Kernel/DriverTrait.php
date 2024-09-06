@@ -20,12 +20,12 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Kernel;
+namespace WPShieldon\Firewall\Kernel;
 
-use Shieldon\Firewall\Driver\DriverProvider;
+use WPShieldon\Firewall\Driver\DriverProvider;
 use Shieldon\Event\Event;
 use RuntimeException;
-use function php_sapi_name;
+use function is_null;
 
 /*
  * Messenger Trait is loaded in Kernel instance only.
@@ -46,7 +46,7 @@ trait DriverTrait
      *
      * @var \Shieldon\Firewall\Driver\DriverProvider
      */
-    public $driver;
+    public ?DriverProvider $driver = null;
 
     /**
      * This is for creating data tables automatically
@@ -54,7 +54,7 @@ trait DriverTrait
      *
      * @var bool
      */
-    protected $isCreateDatabase = true;
+    protected bool $isCreateDatabase = true;
 
     /**
      * Set a data driver.
@@ -76,7 +76,11 @@ trait DriverTrait
 
         $this->driver->init($this->isCreateDatabase);
 
-        $period = $this->sessionLimit['period'] ?: 300;
+        if ($this->sessionLimit['period']) {
+            $period = $this->sessionLimit['period'];
+        } else {
+            $period = 300;
+        }
 
         /**
          * [Hook] `set_driver` - After initializing data driver.
@@ -124,7 +128,7 @@ trait DriverTrait
     {
         $this->isCreateDatabase = false;
 
-        if (php_sapi_name() === 'cli') {
+        if (PHP_SAPI === 'cli') {
             // Unit testing needs.
             $this->isCreateDatabase = true;
         }

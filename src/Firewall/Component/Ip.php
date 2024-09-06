@@ -20,12 +20,13 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Component;
+namespace WPShieldon\Firewall\Component;
 
-use Shieldon\Firewall\Component\ComponentProvider;
-use Shieldon\Firewall\Component\AllowedTrait;
-use Shieldon\Firewall\Component\DeniedTrait;
-use Shieldon\Firewall\IpTrait;
+use WPShieldon\Firewall\Component\ComponentProvider;
+use WPShieldon\Firewall\Component\AllowedTrait;
+use WPShieldon\Firewall\Component\DeniedTrait;
+use WPShieldon\Firewall\IpTrait;
+use WPShieldon\Firewall\Kernel\Enum;
 
 use function array_keys;
 use function base_convert;
@@ -33,9 +34,7 @@ use function count;
 use function explode;
 use function filter_var;
 use function ip2long;
-use function pow;
 use function str_pad;
-use function strpos;
 use function substr_count;
 use function unpack;
 
@@ -92,18 +91,18 @@ class Ip extends ComponentProvider
     /**
      * Constant
      */
-    const STATUS_CODE = 81;
+    public const STATUS_CODE = Enum::REASON_COMPONENT_IP_DENIED;
 
-    const REASON_INVALID_IP_DENIED = 40;
-    const REASON_DENY_IP_DENIED    = 41;
-    const REASON_ALLOW_IP_DENIED   = 42;
+    public const REASON_INVALID_IP_DENIED = 40;
+    public const REASON_DENY_IP_DENIED    = 41;
+    public const REASON_ALLOW_IP_DENIED   = 42;
 
     /**
      * Only allow IPs in allowedList, then deny all.
      *
      * @param bool
      */
-    protected $isDenyAll = false;
+    protected bool $isDenyAll = false;
 
     /**
      * Check an IP if it exists in Anti-Scraping allow/deny list.
@@ -227,16 +226,16 @@ class Ip extends ComponentProvider
      */
     protected function inRangeIp4(string $ip, string $ipRange): bool
     {
-        if (strpos($ipRange, '/') === false) {
+        if ( ! str_contains( $ipRange, '/' ) ) {
             $ipRange .= '/32';
         }
 
         // $range is in IP/CIDR format eg 127.0.0.1/24
-        list($ipRange, $netmask) = explode('/', $ipRange, 2);
+        [$ipRange, $netmask] = explode('/', $ipRange, 2);
 
         $rangeDecimal = ip2long($ipRange);
         $ipDecimal = ip2long($ip);
-        $wildcardDecimal = pow(2, (32 - $netmask)) - 1;
+        $wildcardDecimal = (2 ** (32 - $netmask)) - 1;
 
         // Bits that are set in $wildcardDecimal are not set, and vice versa.
         // Bitwise Operators:
@@ -336,7 +335,7 @@ class Ip extends ComponentProvider
      *
      * @return string
      */
-    public function decimalIpv6Confirm($ip): string
+    public function decimalIpv6Confirm(string $ip): string
     {
         $binNum = '';
         foreach (unpack('C*', inet_pton($ip)) as $byte) {
@@ -353,14 +352,13 @@ class Ip extends ComponentProvider
     public function isDenied(): bool
     {
         foreach ($this->deniedList as $deniedIp) {
-            if (strpos($deniedIp, '/') !== false) {
+            if (str_contains($deniedIp, '/')) {
                 if ($this->inRange($this->ip, $deniedIp)) {
                     return true;
                 }
-            } else {
-                if ($deniedIp === $this->ip) {
-                    return true;
-                }
+            }
+            if ($deniedIp === $this->ip) {
+                return true;
             }
         }
 
@@ -375,14 +373,13 @@ class Ip extends ComponentProvider
     public function isAllowed(): bool
     {
         foreach ($this->allowedList as $allowedIp) {
-            if (strpos($allowedIp, '/') !== false) {
+            if ( str_contains( $allowedIp, '/' ) ) {
                 if ($this->inRange($this->ip, $allowedIp)) {
                     return true;
                 }
-            } else {
-                if ($allowedIp === $this->ip) {
-                    return true;
-                }
+            }
+            if ($allowedIp === $this->ip) {
+                return true;
             }
         }
 
@@ -402,9 +399,9 @@ class Ip extends ComponentProvider
     /**
      * Unique deny status code.
      *
-     * @return int
+     * @return string
      */
-    public function getDenyStatusCode(): int
+    public function getDenyStatusCode(): string
     {
         return self::STATUS_CODE;
     }

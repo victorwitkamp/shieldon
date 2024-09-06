@@ -20,11 +20,13 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Kernel;
+namespace WPShieldon\Firewall\Kernel;
 
-use Shieldon\Firewall\Kernel\Enum;
-use function Shieldon\Firewall\get_session_instance;
-use function Shieldon\Firewall\create_new_session_instance;
+use WPShieldon\Firewall\Kernel\Enum;
+use function WPShieldon\Firewall\get_session_instance;
+use function WPShieldon\Firewall\create_new_session_instance;
+use function count;
+use function in_array;
 use function time;
 
 /*
@@ -46,7 +48,7 @@ trait SessionTrait
      *
      * @var array
      */
-    protected $sessionLimit = [
+    protected array $sessionLimit = [
 
         // How many sessions will be available?
         // 0 = no limit.
@@ -70,7 +72,7 @@ trait SessionTrait
      *
      * @var array
      */
-    protected $sessionStatus = [
+    protected array $sessionStatus = [
 
         // Online session count.
         'count' => 0,
@@ -88,7 +90,7 @@ trait SessionTrait
      *
      * @var array
      */
-    protected $sessionData = [];
+    protected array $sessionData = [];
 
     /**
      * Limt online sessions.
@@ -123,11 +125,11 @@ trait SessionTrait
     /**
      * Deal with online sessions.
      *
-     * @param int $statusCode The response code.
+     * @param string $statusCode The response code.
      *
      * @return int The response code.
      */
-    protected function sessionHandler($statusCode): int
+    protected function sessionHandler(string $statusCode): string
     {
         if (Enum::RESPONSE_ALLOW !== $statusCode) {
             return $statusCode;
@@ -200,6 +202,7 @@ trait SessionTrait
 
             // Online session count reached the limit. So return RESPONSE_LIMIT_SESSION response code.
             if ($sessionOrder >= $limit) {
+                error_log('sessionOrder: ' . $sessionOrder . ' is higer or equal to the limit: ' . $limit);
                 return Enum::RESPONSE_LIMIT_SESSION;
             }
         }
@@ -226,7 +229,7 @@ trait SessionTrait
         }
     }
 
-    // @codeCoverageIgnoreStart
+
 
     /**
      * For testing propose. This method will create new Session.
@@ -241,5 +244,5 @@ trait SessionTrait
             create_new_session_instance($sessionId);
         }
     }
-    // @codeCoverageIgnoreEnd
+
 }

@@ -20,9 +20,10 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall;
+namespace WPShieldon\Firewall;
 
 use Psr\Http\Message\ResponseInterface;
+use function defined;
 use function header;
 use function headers_sent;
 use function sprintf;
@@ -45,7 +46,7 @@ class HttpResolver
     {
         if (!headers_sent()) {
             foreach ($response->getHeaders() as $key => $values) {
-                $replace = stripos($key, 'Set-Cookie') === 0 ? false : true;
+                $replace = stripos($key, 'Set-Cookie') !== 0;
                 foreach ($values as $value) {
                     header(sprintf('%s: %s', $key, $value), $replace);
                     $replace = false;
@@ -67,9 +68,9 @@ class HttpResolver
         echo $response->getBody()->getContents();
 
         if ($finally && !defined('PHP_UNIT_TEST')) {
-            // @codeCoverageIgnoreStart
+
             exit;
-            // @codeCoverageIgnoreEnd
+
         }
     }
 }

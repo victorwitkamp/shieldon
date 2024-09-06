@@ -20,11 +20,10 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall;
-
+namespace WPShieldon\Firewall;
 use function substr;
 use function gethostbyaddr;
-use function Shieldon\Firewall\set_ip;
+use function WPShieldon\Firewall\set_ip;
 
 /**
  * IP Trait
@@ -46,7 +45,7 @@ trait IpTrait
      *
      * @var string
      */
-    protected $ip = '';
+    protected string $ip = '';
 
     /**
      * The RDNS recond of the Robot's IP address.
@@ -55,7 +54,7 @@ trait IpTrait
      *
      * @var string
      */
-    protected $rdns = '';
+    protected string $rdns = '';
 
     /**
      * Set an IP address.
@@ -66,17 +65,17 @@ trait IpTrait
      *
      * @return void
      */
-    public function setIp(string $ip, $queryRdns = false): void
+    public function setIp(string $ip, bool $queryRdns = false): void
     {
         $this->ip = $ip;
-        
+
         set_ip($this->ip);
 
         if ($queryRdns) {
             // Check if your IP is from localhost, perhaps your are in development
             // environment?
-            if (substr($this->ip, 0, 8) === '192.168.' ||
-                substr($this->ip, 0, 6) === '127.0.'
+            if (str_starts_with($this->ip, '192.168.') ||
+                str_starts_with($this->ip, '127.0.')
             ) {
                 $this->setRdns('localhost');
             } else {

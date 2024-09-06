@@ -20,10 +20,10 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Driver;
+namespace WPShieldon\Firewall\Driver;
 
-use Shieldon\Firewall\Driver\DriverProvider;
-use Shieldon\Firewall\Driver\SqlDriverTrait;
+use WPShieldon\Firewall\Driver\DriverProvider;
+use WPShieldon\Firewall\Driver\SqlDriverTrait;
 use Exception;
 use PDO;
 use function array_merge;
@@ -42,14 +42,14 @@ class SqlDriverProvider extends DriverProvider
      *
      * @var string
      */
-    protected $tableDbEngine = 'innodb';
+    protected string $tableDbEngine = 'innodb';
 
     /**
      * PDO instance.
      *
      * @var object
      */
-    protected $db;
+    protected PDO    $db;
 
     /**
      * Constructor.
@@ -235,7 +235,7 @@ class SqlDriverProvider extends DriverProvider
             return $this->update($tableName, $logData, $logWhere);
         }
 
-        return (bool) $this->insert($tableName, $logData);
+        return $this->insert($tableName, $logData);
     }
 
     /**
@@ -296,7 +296,7 @@ class SqlDriverProvider extends DriverProvider
      *
      * @return bool
      */
-    protected function update(string $table, array $data, array $where)
+    protected function update(string $table, array $data, array $where): bool
     {
         $placeholder = [];
         foreach ($data as $k => $v) {
@@ -331,9 +331,9 @@ class SqlDriverProvider extends DriverProvider
   
                 // Solve problem with bigint.
                 if ($v >= 2147483647) {
-                    // @codeCoverageIgnoreStart
+
                     $pdoParam = $this->db::PARAM_STR;
-                    // @codeCoverageIgnoreEnd
+
                 }
 
                 $query->bindValue(":$k", $bind[$k], $pdoParam);
@@ -341,11 +341,11 @@ class SqlDriverProvider extends DriverProvider
 
             return $query->execute();
 
-            // @codeCoverageIgnoreStart
+
         } catch (Exception $e) {
             return false;
         }
-        // @codeCoverageIgnoreEnd
+
     }
 
     /**
@@ -356,7 +356,7 @@ class SqlDriverProvider extends DriverProvider
      *
      * @return bool
      */
-    protected function insert(string $table, array $data)
+    protected function insert(string $table, array $data): bool
     {
         $placeholderField = [];
         $placeholderValue = [];
@@ -392,11 +392,11 @@ class SqlDriverProvider extends DriverProvider
 
             return $query->execute();
 
-            // @codeCoverageIgnoreStart
+
         } catch (Exception $e) {
             return false;
         }
-        // @codeCoverageIgnoreEnd
+
     }
 
     /**
@@ -435,11 +435,11 @@ class SqlDriverProvider extends DriverProvider
             }
 
             return $query->execute();
-            // @codeCoverageIgnoreStart
+
         } catch (Exception $e) {
             return false;
         }
-        // @codeCoverageIgnoreEnd
+
     }
 
     /**
@@ -450,17 +450,14 @@ class SqlDriverProvider extends DriverProvider
     protected function installSql(): bool
     {
         try {
-            $sql = "
+            $this->db->query("
                 CREATE TABLE IF NOT EXISTS `{$this->tableFilterLogs}` (
                     `log_ip` varchar(46) NOT NULL,
                     `log_data` blob,
                     PRIMARY KEY (`log_ip`)
                 ) ENGINE={$this->tableDbEngine} DEFAULT CHARSET=latin1;
-            ";
-
-            $this->db->query($sql);
-
-            $sql = "
+            ");
+            $this->db->query("
                 CREATE TABLE IF NOT EXISTS `{$this->tableRuleList}` (
                     `log_ip` varchar(46) NOT NULL,
                     `ip_resolve` varchar(255) NOT NULL,
@@ -470,11 +467,8 @@ class SqlDriverProvider extends DriverProvider
                     `attempts` int(10) UNSIGNED DEFAULT 0,
                     PRIMARY KEY (`log_ip`)
                 ) ENGINE={$this->tableDbEngine} DEFAULT CHARSET=latin1;
-            ";
-
-            $this->db->query($sql);
-
-            $sql = "
+            ");
+            $this->db->query("
                 CREATE TABLE `{$this->tableSessions}` (
                     `id` varchar(40) NOT NULL,
                     `ip` varchar(46) NOT NULL,
@@ -483,15 +477,10 @@ class SqlDriverProvider extends DriverProvider
                     `data` blob,
                     PRIMARY KEY (`id`)
                 ) ENGINE={$this->tableDbEngine} DEFAULT CHARSET=latin1;
-            ";
-
-            $this->db->query($sql);
-
-            // @codeCoverageIgnoreStart
+            ");
         } catch (Exception $e) {
             return false;
         }
-        // @codeCoverageIgnoreEnd
 
         return true;
     }
@@ -504,20 +493,17 @@ class SqlDriverProvider extends DriverProvider
     protected function rebuildSql(): bool
     {
         try {
-            $sql = "DROP TABLE IF EXISTS `{$this->tableFilterLogs}`";
-            $this->db->query($sql);
-            $sql = "DROP TABLE IF EXISTS `{$this->tableRuleList}`";
-            $this->db->query($sql);
-            $sql = "DROP TABLE IF EXISTS `{$this->tableSessions}`";
-            $this->db->query($sql);
+            $this->db->query("DROP TABLE IF EXISTS `{$this->tableFilterLogs}`");
+            $this->db->query("DROP TABLE IF EXISTS `{$this->tableRuleList}`");
+            $this->db->query("DROP TABLE IF EXISTS `{$this->tableSessions}`");
 
             $this->installSql();
 
-            // @codeCoverageIgnoreStart
+
         } catch (Exception $e) {
             return false;
         }
-        // @codeCoverageIgnoreEnd
+
 
         return true;
     }

@@ -38,14 +38,14 @@ class Header implements MiddlewareInterface
      *
      * @var int
      */
-    const HTTP_STATUS_CODE = 406;
+    public const HTTP_STATUS_CODE = 406;
 
     /**
      * Very common requests from normal users.
      *
      * @var array
      */
-    protected $fieldList = [
+    protected array $fieldList = [
         'Accept',
         'Accept-Language',
         'Accept-Encoding',

@@ -20,9 +20,9 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Driver;
+namespace WPShieldon\Firewall\Driver;
 
-use Shieldon\Firewall\Driver\SqlDriverProvider;
+use WPShieldon\Firewall\Driver\SqlDriverProvider;
 use Exception;
 use PDO;
 
@@ -52,16 +52,13 @@ class SqliteDriver extends SqlDriverProvider
     protected function installSql(): bool
     {
         try {
-            $sql = "
+            $this->db->query("
                 CREATE TABLE IF NOT EXISTS {$this->tableFilterLogs} (
                     log_ip VARCHAR(46) PRIMARY KEY,
                     log_data BLOB
                 );
-            ";
-
-            $this->db->query($sql);
-
-            $sql = "
+            ");
+            $this->db->query("
                 CREATE TABLE IF NOT EXISTS {$this->tableRuleList} (
                     log_ip VARCHAR(46) PRIMARY KEY, 
                     ip_resolve VARCHAR(255), 
@@ -70,11 +67,8 @@ class SqliteDriver extends SqlDriverProvider
                     time INT(10),
                     attempts INT(10)
                 );
-            ";
-
-            $this->db->query($sql);
-
-            $sql = "
+            ");
+            $this->db->query("
                 CREATE TABLE IF NOT EXISTS {$this->tableSessions} (
                     id VARCHAR(40) PRIMARY KEY, 
                     ip VARCHAR(46),
@@ -82,17 +76,14 @@ class SqliteDriver extends SqlDriverProvider
                     microtimestamp BIGINT(20),
                     data
                 );
-            ";
+            ");
 
-            $this->db->query($sql);
 
             return true;
 
-            // @codeCoverageIgnoreStart
         } catch (Exception $e) {
             return false;
         }
-        // @codeCoverageIgnoreEnd
     }
 
     /**
@@ -109,12 +100,10 @@ class SqliteDriver extends SqlDriverProvider
         try {
             $result = $this->db->query("SELECT 1 FROM $this->tableFilterLogs LIMIT 1");
 
-            // @codeCoverageIgnoreStart
         } catch (Exception $e) {
             // We got an exception == table not found
             return false;
         }
-        // @codeCoverageIgnoreEnd
 
         return ($result !== false);
     }

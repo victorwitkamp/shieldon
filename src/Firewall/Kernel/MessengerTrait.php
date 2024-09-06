@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Kernel;
+namespace WPShieldon\Firewall\Kernel;
 
 use Shieldon\Messenger\Messenger\MessengerInterface;
 use RuntimeException;
@@ -43,14 +43,14 @@ trait MessengerTrait
      *
      * @var array
      */
-    protected $messenger = [];
+    protected array $messenger = [];
 
     /**
      * The message that will be sent to the third-party API.
      *
      * @var string
      */
-    protected $msgBody = '';
+    protected string $msgBody = '';
 
     /**
      * Get a class name without namespace string.
@@ -86,7 +86,7 @@ trait MessengerTrait
         $this->msgBody = $message;
     }
 
-    // @codeCoverageIgnoreStart
+
 
     /**
      * Undocumented function
@@ -104,11 +104,11 @@ trait MessengerTrait
                 $messenger->setTimeout(2);
                 $messenger->send($this->msgBody);
             }
-        // phpcs:ignore
+
         } catch (RuntimeException $e) {
             // Do not throw error, becasue the third-party services might be unavailable.
         }
     }
 
-    // @codeCoverageIgnoreEnd
+
 }

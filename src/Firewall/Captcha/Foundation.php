@@ -20,12 +20,12 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Captcha;
+namespace WPShieldon\Firewall\Captcha;
 
-use Shieldon\Firewall\Captcha\CaptchaProvider;
+use WPShieldon\Firewall\Captcha\CaptchaProvider;
 
-use function Shieldon\Firewall\get_request;
-use function Shieldon\Firewall\unset_superglobal;
+use function WPShieldon\Firewall\get_request;
+use function WPShieldon\Firewall\unset_superglobal;
 
 /**
  * Basic form.

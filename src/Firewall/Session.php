@@ -20,18 +20,21 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall;
+namespace WPShieldon\Firewall;
 
+use Monolog\Handler\StreamHandler;
+use Monolog\Level;
+use Monolog\Logger;
 use Shieldon\Event\Event;
-use Shieldon\Firewall\Container;
-use Shieldon\Firewall\Driver\DriverProvider;
+use WPShieldon\Firewall\Container;
+use WPShieldon\Firewall\Driver\DriverProvider;
 use RuntimeException;
-use function Shieldon\Firewall\create_session_id;
-use function Shieldon\Firewall\get_ip;
-use function Shieldon\Firewall\get_microtimestamp;
-use function Shieldon\Firewall\get_request;
-use function Shieldon\Firewall\get_response;
-use function Shieldon\Firewall\set_response;
+use function WPShieldon\Firewall\create_session_id;
+use function WPShieldon\Firewall\get_ip;
+use function WPShieldon\Firewall\get_microtimestamp;
+use function WPShieldon\Firewall\get_request;
+use function WPShieldon\Firewall\get_response;
+use function WPShieldon\Firewall\set_response;
 use function intval;
 use function rand;
 use function setcookie;
@@ -59,12 +62,14 @@ class Session
      *  ----------------------|---------------------------------------------
      */
 
+    public Logger $psrlogger;
+
     /**
      * The session data.
      *
      * @var array
      */
-    protected $data = [];
+    protected array $data = [];
 
     /**
      * The session data will be removed after expiring.
@@ -72,35 +77,35 @@ class Session
      *
      * @var int
      */
-    protected $expire = 600;
+    protected int $expire = 600;
 
     /**
      * The Shieldon kernel.
      *
      * @var Kernel|null
      */
-    protected $kernel;
+    protected ?Kernel $kernel;
 
     /**
      * The data driver.
      *
      * @var DriverProvider|null
      */
-    protected $driver;
+    protected ?DriverProvider $driver;
 
     /**
      * Make sure the init() run first.
      *
      * @var bool
      */
-    protected static $status = false;
+    protected static bool $status = false;
 
     /**
      * A session Id.
      *
      * @var string
      */
-    protected static $id = '_php_cli_';
+    protected static string $id = '_php_cli_';
 
     /**
      * Constructor.
@@ -109,19 +114,22 @@ class Session
      */
     public function __construct(string $sessionId = '')
     {
+        $this->psrlogger = new Logger( 'SessionLogger' );
+        $this->psrlogger->pushHandler( new StreamHandler( SHIELDON_PLUGIN_DIR . '/logs/Shieldon_Session.log', Level::Warning ) );
+        $this->psrlogger->warning( 'Construct ' . $_SERVER['REQUEST_URI'] );
         $this->setId($sessionId);
 
         /**
          * Store the session data back into the database table when the
          * Shieldon Kernel workflow is reaching the end of the process.
          */
-        Event::AddListener('kernel_end', [$this, 'save'], 10);
+        Event::AddListener( 'kernel_end', [ $this, 'save' ]);
 
         /**
          * Store the session data back into the database table when the
          * user is logged successfully.
          */
-        Event::AddListener('user_login', [$this, 'save'], 10);
+        Event::AddListener( 'user_login', [ $this, 'save' ]);
     }
 
     /**
@@ -262,7 +270,7 @@ class Session
      *
      * @return bool
      */
-    public function has($key): bool
+    public function has(string $key): bool
     {
         $this->assertInit();
 
@@ -336,7 +344,7 @@ class Session
      */
     protected function gc(int $expires, int $probability, int $divisor): bool
     {
-        $chance = intval($divisor / $probability);
+        $chance = (int)($divisor / $probability);
         $hit = rand(1, $chance);
 
         if ($hit === 1) {
@@ -351,8 +359,10 @@ class Session
                     }
                 }
             }
+            $this->psrlogger->warning( 'Shieldon - Session - gc true' );
             return true;
         }
+        $this->psrlogger->warning( 'Shieldon - Session - gc false' );
         return false;
     }
 
@@ -363,6 +373,7 @@ class Session
      */
     protected function create(): void
     {
+        $this->psrlogger->warning( 'Shieldon - Session - Create - ' . get_ip() . ' ' . $_SERVER['REQUEST_URI'] );
         $data = [];
 
         // Initialize new session data.

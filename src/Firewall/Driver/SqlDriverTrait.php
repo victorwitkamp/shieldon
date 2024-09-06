@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Driver;
+namespace WPShieldon\Firewall\Driver;
 
 use RuntimeException;
 
@@ -52,7 +52,7 @@ trait SqlDriverTrait
 
         $this->assertPrepare($query);
 
-        $query->bindValue(':log_ip', $ip, $this->db::PARAM_STR);
+        $query->bindValue(':log_ip', $ip);
         $query->execute();
         $resultData = $query->fetch($this->db::FETCH_ASSOC);
 
@@ -87,7 +87,7 @@ trait SqlDriverTrait
 
         $this->assertPrepare($query);
         
-        $query->bindValue(':log_ip', $ip, $this->db::PARAM_STR);
+        $query->bindValue(':log_ip', $ip);
         $query->execute();
         $resultData = $query->fetch($this->db::FETCH_ASSOC);
 
@@ -123,7 +123,7 @@ trait SqlDriverTrait
 
         $this->assertPrepare($query);
 
-        $query->bindValue(':id', $id, $this->db::PARAM_STR);
+        $query->bindValue(':id', $id);
         $query->execute();
         $resultData = $query->fetch($this->db::FETCH_ASSOC);
 

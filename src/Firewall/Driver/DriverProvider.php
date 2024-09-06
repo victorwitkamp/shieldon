@@ -20,10 +20,11 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Driver;
+namespace WPShieldon\Firewall\Driver;
 
-use Shieldon\Firewall\Driver\AbstractDriver;
+use WPShieldon\Firewall\Driver\AbstractDriver;
 use RuntimeException;
+use function in_array;
 
 /**
  * Driver Provider.
@@ -35,45 +36,45 @@ class DriverProvider extends AbstractDriver
      *
      * @var string
      */
-    protected $tableFilterLogs = 'shieldon_filter_logs';
+    protected string $tableFilterLogs = 'shieldon_filter_logs';
 
     /**
      * Data table name for whitelist.
      *
      * @var string
      */
-    protected $tableRuleList = 'shieldon_rule_list';
+    protected string $tableRuleList = 'shieldon_rule_list';
 
     /**
      * Data table for recording online session count.
      *
      * @var string
      */
-    protected $tableSessions = 'shieldon_sessions';
+    protected string $tableSessions = 'shieldon_sessions';
 
     /**
      * The prefix of the database tables, or the name of file directory.
      *
      * @var string
      */
-    protected $channel = '';
+    protected string $channel = '';
 
     /**
      * Check if is initialized or not.
      *
      * @var bool
      */
-    protected $isInitialized = false;
+    protected bool $isInitialized = false;
 
     /**
      * The table types.
      *
      * @var array
      */
-    protected $tableTypes = [
+    protected array $tableTypes = [
         'rule',
         'filter',
-        'session',
+        'session'
     ];
 
     /**
@@ -175,7 +176,7 @@ class DriverProvider extends AbstractDriver
         return $parsedData;
     }
 
-    // @codeCoverageIgnoreStart
+
 
     /**
      * Implement fetch.
@@ -280,5 +281,5 @@ class DriverProvider extends AbstractDriver
             );
         }
     }
-    // @codeCoverageIgnoreEnd
+
 }

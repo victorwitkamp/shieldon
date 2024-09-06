@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Firewall;
+namespace WPShieldon\Firewall\Firewall;
 
 use Shieldon\Security\Xss;
 use function array_keys;

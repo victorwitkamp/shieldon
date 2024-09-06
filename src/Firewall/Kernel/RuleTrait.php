@@ -20,12 +20,12 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Kernel;
+namespace WPShieldon\Firewall\Kernel;
 
-use Shieldon\Firewall\Kernel\Enum;
-use function Shieldon\Firewall\__;
-use function Shieldon\Firewall\get_cpu_usage;
-use function Shieldon\Firewall\get_memory_usage;
+use WPShieldon\Firewall\Kernel\Enum;
+use function WPShieldon\Firewall\__;
+use function WPShieldon\Firewall\get_cpu_usage;
+use function WPShieldon\Firewall\get_memory_usage;
 use function file_exists;
 use function file_put_contents;
 use function filter_var;
@@ -42,7 +42,7 @@ trait RuleTrait
      *
      * @var array
      */
-    protected $event = [
+    protected array $event = [
 
         // Update rule table when this value true.
         'update_rule_table' => false,
@@ -64,11 +64,11 @@ trait RuleTrait
      * Save and return the result identifier.
      * This method is for passing value from traits.
      *
-     * @param int $resultCode The result identifier.
+     * @param string $resultCode The result identifier.
      *
      * @return int
      */
-    abstract protected function setResultCode(int $resultCode): int;
+    abstract protected function setResultCode(string $resultCode): string;
 
     /**
      * Look up the rule table.
@@ -78,7 +78,7 @@ trait RuleTrait
      *
      * @return bool
      */
-    protected function isRuleExist()
+    protected function isRuleExist(): bool
     {
         $ipRule = $this->driver->get($this->ip, 'rule');
 
@@ -88,13 +88,15 @@ trait RuleTrait
 
         $this->reason = $ipRule['reason'];
 
-        $ruleType = (int) $ipRule['type'];
+        $this->psrlogger->warning('Shieldon - RuleTrait - isRuleExist - rule found for IP: ' . $this->ip . ' (Reason: ' . $ipRule['reason'] . ')');
 
-        // Apply the status code.
-        $this->setResultCode($ruleType);
-
-        if ($ruleType === Enum::ACTION_ALLOW) {
+        if ($ipRule['type'] === Enum::ACTION_TEMPORARILY_DENY) {
+            $this->setResultCode(Enum::RESPONSE_TEMPORARILY_DENY);
+        } elseif ($ipRule['type'] === Enum::ACTION_ALLOW) {
+            $this->setResultCode(Enum::RESPONSE_ALLOW);
             return true;
+        } else {
+            $this->setResultCode(Enum::RESPONSE_DENY);
         }
 
         // Current visitor has been blocked. If he still attempts accessing the site,
@@ -126,13 +128,13 @@ trait RuleTrait
             $logData['attempts'] = 0;
         }
 
-        if ($ruleType === Enum::ACTION_TEMPORARILY_DENY) {
+        if ($ipRule['type'] === Enum::ACTION_TEMPORARILY_DENY) {
             $ratd = $this->determineAttemptsTemporaryDeny($logData, $handleType, $attempts);
             $logData = $ratd['log_data'];
             $handleType = $ratd['handle_type'];
         }
 
-        if ($ruleType === Enum::ACTION_DENY) {
+        if ($ipRule['type'] === Enum::ACTION_DENY) {
             $rapd = $this->determineAttemptsPermanentDeny($logData, $handleType, $attempts);
             $logData = $rapd['log_data'];
             $handleType = $rapd['handle_type'];
@@ -261,8 +263,6 @@ trait RuleTrait
             __('core', 'messenger_text_reason')   => __('core', 'messenger_text_reason_code_' . $logData['reason']),
             __('core', 'messenger_text_handle')   => __('core', 'messenger_text_handle_type_' . $handleType),
             __('core', 'messenger_text_system')   => '',
-            __('core', 'messenger_text_cpu')      => get_cpu_usage(),
-            __('core', 'messenger_text_memory')   => get_memory_usage(),
             __('core', 'messenger_text_time')     => date('Y-m-d H:i:s', $logData['time']),
             __('core', 'messenger_text_timezone') => date_default_timezone_get(),
         ];

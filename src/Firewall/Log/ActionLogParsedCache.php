@@ -20,7 +20,7 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Log;
+namespace WPShieldon\Firewall\Log;
 
 use function date;
 use function file_get_contents;
@@ -41,7 +41,7 @@ final class ActionLogParsedCache
      *
      * @var string
      */
-    protected $directory = '';
+    protected string $directory = '';
 
     /**
      * Constructer.
@@ -57,7 +57,7 @@ final class ActionLogParsedCache
      * Save the data into a cache file.
      *
      * @param string $type The period type of action logs.
-     * @param string $data The parsed data of action logs.
+     * @param array  $data The parsed data of action logs.
      *                     The keys are `time`, `ip_details`, `period_data`.
      *
      * @return self
@@ -126,15 +126,18 @@ final class ActionLogParsedCache
             }
 
             // The cacheTime is between beginTime and endTime.
-            // @codeCoverageIgnoreStart
+
             if (($beginTime < $cacheTime) && ($endTime > $cacheTime)) {
                 $keepCache = false;
             }
-
+            else {
+                // Debug statement
+                $keepCache = false;
+            }
             if (!$keepCache) {
                 $data = [];
             }
-            // @codeCoverageIgnoreEnd
+
         }
 
         return $data;

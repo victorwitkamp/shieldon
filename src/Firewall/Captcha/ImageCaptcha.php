@@ -20,17 +20,18 @@
 
 declare(strict_types=1);
 
-namespace Shieldon\Firewall\Captcha;
+namespace WPShieldon\Firewall\Captcha;
 
 use RuntimeException;
 use GdImage; // PHP 8
-use Shieldon\Firewall\Captcha\CaptchaProvider;
+use WPShieldon\Firewall\Captcha\CaptchaProvider;
 
-use function Shieldon\Firewall\get_request;
-use function Shieldon\Firewall\get_session_instance;
-use function Shieldon\Firewall\unset_superglobal;
+use function WPShieldon\Firewall\get_request;
+use function WPShieldon\Firewall\get_session_instance;
+use function WPShieldon\Firewall\unset_superglobal;
 use function base64_encode;
 use function cos;
+use function extension_loaded;
 use function function_exists;
 use function imagecolorallocate;
 use function imagecreate;
@@ -42,6 +43,8 @@ use function imageline;
 use function imagepng;
 use function imagerectangle;
 use function imagestring;
+use function is_array;
+use function is_resource;
 use function mt_rand;
 use function ob_end_clean;
 use function ob_get_contents;
@@ -61,7 +64,7 @@ class ImageCaptcha extends CaptchaProvider
      *
      * @var array
      */
-    protected $properties = [];
+    protected array $properties = [];
 
 
     /**
@@ -69,14 +72,14 @@ class ImageCaptcha extends CaptchaProvider
      *
      * @var string
      */
-    protected $imageType = '';
+    protected string $imageType = '';
 
     /**
      * Word.
      *
      * @var string
      */
-    protected $word = '';
+    protected string $word = '';
 
     /**
      * Image resource.
@@ -91,7 +94,7 @@ class ImageCaptcha extends CaptchaProvider
      *
      * @var int
      */
-    protected $length = 4;
+    protected int $length = 4;
 
     /**
      * Constructor.
@@ -104,6 +107,7 @@ class ImageCaptcha extends CaptchaProvider
      */
     public function __construct(array $config = [])
     {
+        parent::__construct();
         $defaults = [
             'img_width'    => 250,
             'img_height'   => 50,
@@ -170,11 +174,11 @@ class ImageCaptcha extends CaptchaProvider
      */
     public function form(): string
     {
-        // @codeCoverageIgnoreStart
+
         if (!extension_loaded('gd')) {
             return '';
         }
-        // @codeCoverageIgnoreEnd
+
 
         $html = '';
         $base64image = $this->createCaptcha();
@@ -218,7 +222,7 @@ class ImageCaptcha extends CaptchaProvider
      *
      * @return string
      */
-    protected function createCaptcha()
+    protected function createCaptcha(): string
     {
         $imgWidth = $this->properties['img_width'];
         $imgHeight = $this->properties['img_height'];
@@ -309,12 +313,12 @@ class ImageCaptcha extends CaptchaProvider
         if (function_exists('imagecreatetruecolor')) {
             $this->im = imagecreatetruecolor($imgWidth, $imgHeight);
     
-            // @codeCoverageIgnoreStart
+
         } else {
             $this->im = imagecreate($imgWidth, $imgHeight);
         }
 
-        // @codeCoverageIgnoreEnd
+
     }
 
     /**
@@ -326,7 +330,7 @@ class ImageCaptcha extends CaptchaProvider
      *
      * @return void
      */
-    private function createBackground(int $imgWidth, int $imgHeight, $bgColor)
+    private function createBackground(int $imgWidth, int $imgHeight, int $bgColor)
     {
         $im = $this->getImageResource();
 
@@ -342,7 +346,7 @@ class ImageCaptcha extends CaptchaProvider
      *
      * @return void
      */
-    private function createSpiralPattern(int $imgWidth, int $imgHeight, $gridColor)
+    private function createSpiralPattern(int $imgWidth, int $imgHeight, int $gridColor)
     {
         $im = $this->getImageResource();
 
@@ -385,7 +389,7 @@ class ImageCaptcha extends CaptchaProvider
      *
      * @return void
      */
-    private function writeText(int $imgWidth, int $imgHeight, $textColor)
+    private function writeText(int $imgWidth, int $imgHeight, int $textColor)
     {
         $im = $this->getImageResource();
 
@@ -409,7 +413,7 @@ class ImageCaptcha extends CaptchaProvider
      *
      * @return void
      */
-    private function createBorder(int $imgWidth, int $imgHeight, $borderColor): void
+    private function createBorder(int $imgWidth, int $imgHeight, int $borderColor): void
     {
         $im = $this->getImageResource();
 
@@ -433,7 +437,7 @@ class ImageCaptcha extends CaptchaProvider
             $this->imageType = 'jpeg';
             imagejpeg($im);
 
-            // @codeCoverageIgnoreStart
+
         } elseif (function_exists('imagepng')) {
             $this->imageType = 'png';
             imagepng($im);
@@ -441,7 +445,7 @@ class ImageCaptcha extends CaptchaProvider
             echo '';
         }
 
-        // @codeCoverageIgnoreEnd
+
 
         $imageContent = ob_get_contents();
         ob_end_clean();
@@ -455,24 +459,18 @@ class ImageCaptcha extends CaptchaProvider
      *
      * @return resource|GdImage
      */
-    private function getImageResource()
+    private function getImageResource(): resource|GdImage
     {
-        if (version_compare(phpversion(), '8.0.0', '>=')) {
+        if (PHP_VERSION_ID >= 80000) {
             if (!$this->im instanceof GdImage) {
-                // @codeCoverageIgnoreStart
                 throw new RuntimeException(
                     'Cannot create image resource.'
                 );
-                // @codeCoverageIgnoreEnd
             }
-        } else {
-            if (!is_resource($this->im)) {
-                // @codeCoverageIgnoreStart
-                throw new RuntimeException(
-                    'Cannot create image resource.'
-                );
-                // @codeCoverageIgnoreEnd
-            }
+        } elseif (!is_resource($this->im)) {
+            throw new RuntimeException(
+                'Cannot create image resource.'
+            );
         }
 
         return $this->im;
